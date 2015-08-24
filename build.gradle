@@ -1,0 +1,51 @@
+apply plugin: 'java'
+apply plugin: 'groovy'
+apply plugin: 'idea'
+repositories {
+    maven { url "http://10.32.11.210:8081/nexus/content/groups/public" }
+    jcenter()
+    maven { url "http://repo.spring.io/snapshot" }
+    maven { url "http://repo.spring.io/milestone" }
+}
+
+group = 'org.nofdev'
+version = '0.0.1-SNAPSHOT'
+sourceCompatibility = 1.7
+targetCompatibility = 1.7
+
+configurations.all {
+    resolutionStrategy.cacheChangingModulesFor 0, 'seconds'
+}
+
+
+[compileJava, compileTestJava, compileGroovy, compileTestGroovy]*.options*.encoding = 'UTF-8'
+
+dependencies {
+    compile "org.codehaus.groovy:groovy-all:2.4.4"
+    compile "org.springframework:spring-webmvc:4.1.7.RELEASE"
+    compile "org.springframework.boot:spring-boot:1.2.5.RELEASE"
+    compile (group: 'org.nofdev', name: 'service-core', version: '0.0.1-SNAPSHOT', changing: true)
+    compile "org.slf4j:slf4j-api:1.7.12"
+    compile "com.fasterxml.jackson.core:jackson-core:2.6.1"
+    compile "com.fasterxml.jackson.core:jackson-databind:2.6.1"
+}
+
+
+
+task wrapper(type: Wrapper) {
+    gradleVersion = '2.5'
+}
+
+//TODO @Deprecated apply plugin: 'maven-publish'
+apply plugin: 'maven'
+
+// ./gradlew uploadArchives -PmavenUser=deployment -PmavenPassword=xxx
+uploadArchives {
+    repositories {
+        mavenDeployer {
+            repository(url: "http://10.32.11.210:8081/nexus/content/repositories/snapshots/") {
+                authentication(userName: "deployment", password: "yintai.123")
+            }
+        }
+    }
+}
