@@ -4,9 +4,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.nofdev.servicefacade.HttpJsonResponse;
-import org.nofdev.servicefacade.AbstractBusinessException;
-import org.nofdev.servicefacade.UnhandledException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -53,8 +50,7 @@ public class FacadeController {
             interfaceName += "Facade";
         }
         interfaceName = packageName + '.' + interfaceName;
-
-        logger.debug("ask instance for interface {}", interfaceName);
+        logger.info("JSON facade call(callId:{}): {}.{}{}", httpJsonResponse.getCallId(), interfaceName, methodName, params);
         Object val = null;
         ExceptionMessage exceptionMessage = null;
         HttpStatus httpStatus = HttpStatus.OK;
@@ -62,7 +58,6 @@ public class FacadeController {
             ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
             Class<?> interfaceClazz = classLoader.loadClass(interfaceName);
             Object service = context.getBean(interfaceClazz);
-            logger.debug("JSON facade call(callId:{}): {}.{}{}", httpJsonResponse.getCallId(), interfaceName, methodName, params);
 
             Method[] methods = ReflectionUtils.getAllDeclaredMethods(interfaceClazz);
             Method method = null;

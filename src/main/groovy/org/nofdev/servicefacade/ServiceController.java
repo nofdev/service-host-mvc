@@ -45,8 +45,7 @@ public class ServiceController {
             interfaceName += "Service";
         }
         interfaceName = packageName + '.' + interfaceName;
-
-        logger.debug("ask instance for interface {}", interfaceName);
+        logger.info("JSON facade call(callId:{}): {}.{}{}", httpJsonResponse.getCallId(), interfaceName, methodName, params);
         Object val = null;
         ExceptionMessage exceptionMessage = null;
         HttpStatus httpStatus = HttpStatus.OK;
@@ -54,7 +53,6 @@ public class ServiceController {
             ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
             Class<?> interfaceClazz = classLoader.loadClass(interfaceName);
             Object service = context.getBean(interfaceClazz);
-            logger.debug("JSON facade call(callId:{}): {}.{}{}", httpJsonResponse.getCallId(), interfaceName, methodName, params);
 
             Method[] methods = ReflectionUtils.getAllDeclaredMethods(interfaceClazz);
             Method method = null;
