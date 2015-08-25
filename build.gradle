@@ -44,7 +44,7 @@ uploadArchives {
     repositories {
         mavenDeployer {
             repository(url: "http://10.32.11.210:8081/nexus/content/repositories/snapshots/") {
-                authentication(userName: "deployment", password: "yintai.123")
+                authentication(userName: mavenUser, password: mavenPassword)
             }
         }
     }
