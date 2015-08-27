@@ -11,10 +11,7 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.ReflectionUtils;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
 import java.lang.reflect.Method;
@@ -41,7 +38,6 @@ public class FacadeController {
     private ApplicationContext context;
 
     @RequestMapping("json/{packageName}/{interfaceName}/{methodName}")
-
     public ResponseEntity<HttpJsonResponse> json(@PathVariable String packageName, @PathVariable String interfaceName,
                                                  @PathVariable String methodName, @RequestParam(value = "params", required = false) String params) {
         HttpJsonResponse<Object> httpJsonResponse = new HttpJsonResponse<Object>();
@@ -89,7 +85,6 @@ public class FacadeController {
         httpJsonResponse.setErr(exceptionMessage);
 
         ResponseEntity<HttpJsonResponse> responseEntity = new ResponseEntity<HttpJsonResponse>(httpJsonResponse, httpStatus);
-        responseEntity.getHeaders().add("Access-Control-Allow-Origin", "*");
         return responseEntity;
     }
 

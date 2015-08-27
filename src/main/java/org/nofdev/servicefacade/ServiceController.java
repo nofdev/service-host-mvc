@@ -85,7 +85,6 @@ public class ServiceController {
         httpJsonResponse.setErr(exceptionMessage);
 
         ResponseEntity<HttpJsonResponse> responseEntity = new ResponseEntity<HttpJsonResponse>(httpJsonResponse, httpStatus);
-        responseEntity.getHeaders().add("Access-Control-Allow-Origin", "*");
         return responseEntity;
     }
 
