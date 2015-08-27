@@ -41,6 +41,7 @@ public class FacadeController {
     private ApplicationContext context;
 
     @RequestMapping("json/{packageName}/{interfaceName}/{methodName}")
+
     public ResponseEntity<HttpJsonResponse> json(@PathVariable String packageName, @PathVariable String interfaceName,
                                                  @PathVariable String methodName, @RequestParam(value = "params", required = false) String params) {
         HttpJsonResponse<Object> httpJsonResponse = new HttpJsonResponse<Object>();
@@ -86,7 +87,10 @@ public class FacadeController {
 
         httpJsonResponse.setVal(val);
         httpJsonResponse.setErr(exceptionMessage);
-        return new ResponseEntity<HttpJsonResponse>(httpJsonResponse, httpStatus);
+
+        ResponseEntity<HttpJsonResponse> responseEntity = new ResponseEntity<HttpJsonResponse>(httpJsonResponse, httpStatus);
+        responseEntity.getHeaders().add("Access-Control-Allow-Origin", "*");
+        return responseEntity;
     }
 
     private List deserialize(String rawParams, Type[] paramTypes) throws IOException {
