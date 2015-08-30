@@ -38,8 +38,10 @@ public class FacadeController {
     private ApplicationContext context;
 
     @RequestMapping("json/{packageName}/{interfaceName}/{methodName}")
-    public ResponseEntity<HttpJsonResponse> json(@PathVariable String packageName, @PathVariable String interfaceName,
-                                                 @PathVariable String methodName, @RequestParam(value = "params", required = false) String params) {
+    public ResponseEntity<HttpJsonResponse> json(@PathVariable String packageName,
+                                                 @PathVariable String interfaceName,
+                                                 @PathVariable String methodName,
+                                                 @RequestParam(value = "params", required = false) String params) {
         HttpJsonResponse<Object> httpJsonResponse = new HttpJsonResponse<Object>();
         httpJsonResponse.setCallId(UUID.randomUUID().toString());
         httpJsonResponse.setVal(packageName);
@@ -56,6 +58,10 @@ public class FacadeController {
             Class<?> interfaceClazz = classLoader.loadClass(interfaceName);
             Object service = context.getBean(interfaceClazz);
 
+            if(service==null){
+                throw new UnhandledException();//TODO 这里要抛出一个404
+            }
+
             Method[] methods = ReflectionUtils.getAllDeclaredMethods(interfaceClazz);
             Method method = null;
             for (Method m : methods) {
@@ -70,6 +76,8 @@ public class FacadeController {
                 } else {
                     val = ReflectionUtils.invokeMethod(method, service);
                 }
+            }else {
+                throw new UnhandledException();//TODO 这里要抛出一个404
             }
         } catch (AbstractBusinessException e) {
             logger.info(e.getMessage(), e);
