@@ -42,7 +42,7 @@ public class FacadeController {
                                                  @PathVariable String interfaceName,
                                                  @PathVariable String methodName,
                                                  @RequestParam(value = "params", required = false) String params) {
-        HttpJsonResponse<Object> httpJsonResponse = new HttpJsonResponse<Object>();
+        HttpJsonResponse<Object> httpJsonResponse = new HttpJsonResponse<>();
         httpJsonResponse.setCallId(UUID.randomUUID().toString());
         httpJsonResponse.setVal(packageName);
         if (!interfaceName.endsWith("Facade")) {
@@ -92,8 +92,7 @@ public class FacadeController {
         httpJsonResponse.setVal(val);
         httpJsonResponse.setErr(exceptionMessage);
 
-        ResponseEntity<HttpJsonResponse> responseEntity = new ResponseEntity<HttpJsonResponse>(httpJsonResponse, httpStatus);
-        return responseEntity;
+        return new ResponseEntity<HttpJsonResponse>(httpJsonResponse, httpStatus);
     }
 
     private List deserialize(String rawParams, Type[] paramTypes) throws IOException {
@@ -101,7 +100,7 @@ public class FacadeController {
         objectMapper.configure(DeserializationFeature.ACCEPT_SINGLE_VALUE_AS_ARRAY, true);
 
         List methodParams = objectMapper.readValue(rawParams, List.class);
-        List<Object> params = new ArrayList<Object>();
+        List<Object> params = new ArrayList<>();
         for (int i = 0; i < methodParams.size(); i++) {
             logger.debug("The param {}'s type name is {}", i, paramTypes[i].toString());
             JavaType javaType = objectMapper.getTypeFactory().constructType(paramTypes[i]);
