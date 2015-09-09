@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.joda.JodaModule;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,7 +12,10 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.ReflectionUtils;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.io.IOException;
 import java.lang.reflect.Method;
@@ -58,7 +62,7 @@ public class FacadeController {
             Class<?> interfaceClazz = classLoader.loadClass(interfaceName);
             Object service = context.getBean(interfaceClazz);
 
-            if(service==null){
+            if (service == null) {
                 throw new UnhandledException();//TODO 这里要抛出一个404
             }
 
@@ -76,7 +80,7 @@ public class FacadeController {
                 } else {
                     val = ReflectionUtils.invokeMethod(method, service);
                 }
-            }else {
+            } else {
                 throw new UnhandledException();//TODO 这里要抛出一个404
             }
         } catch (AbstractBusinessException e) {
@@ -98,6 +102,10 @@ public class FacadeController {
     private List deserialize(String rawParams, Type[] paramTypes) throws IOException {
         ObjectMapper objectMapper = new ObjectMapper();
         objectMapper.configure(DeserializationFeature.ACCEPT_SINGLE_VALUE_AS_ARRAY, true);
+        objectMapper.registerModule(new JodaModule());
+
+        //TODO 需要进一步考证决定是否使用
+        //objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 
         List methodParams = objectMapper.readValue(rawParams, List.class);
         List<Object> params = new ArrayList<>();
