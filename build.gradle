@@ -9,9 +9,9 @@ repositories {
 }
 
 group = 'org.nofdev'
-version = '0.0.1-SNAPSHOT'
-sourceCompatibility = 1.7
-targetCompatibility = 1.7
+version = '0.1.2-SNAPSHOT'
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
 
 configurations.all {
     resolutionStrategy.cacheChangingModulesFor 0, 'seconds'
@@ -23,12 +23,12 @@ configurations.all {
 dependencies {
     compile "org.codehaus.groovy:groovy-all:2.4.4"
     compile "org.springframework:spring-webmvc:4.1.7.RELEASE"
-    compile "org.springframework.boot:spring-boot:1.2.5.RELEASE"
-    compile (group: 'org.nofdev', name: 'service-core', version: '0.0.1-SNAPSHOT', changing: true)
+//    compile "org.springframework.boot:spring-boot:1.2.5.RELEASE"
+    compile (group: 'org.nofdev', name: 'service-core', version: '0.1.0-SNAPSHOT', changing: true)
     compile "org.slf4j:slf4j-api:1.7.12"
-    compile "com.fasterxml.jackson.core:jackson-core:2.6.1"
-    compile "com.fasterxml.jackson.core:jackson-databind:2.6.1"
-    compile "com.fasterxml.jackson.datatype:jackson-datatype-joda:2.6.1"
+    compile "com.fasterxml.jackson.core:jackson-core:2.6.3"
+    compile "com.fasterxml.jackson.core:jackson-databind:2.6.3"
+    compile "com.fasterxml.jackson.datatype:jackson-datatype-joda:2.6.3"
 
     testCompile(
             "org.springframework:spring-test:4.1.7.RELEASE",

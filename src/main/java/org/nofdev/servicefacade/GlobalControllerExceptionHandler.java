@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 
 /**
  * Created by wangxuesong on 15/8/14.
+ * TODO 这个类不起作用, 没有使用全局异常处理机制
  */
 @ControllerAdvice
 public class GlobalControllerExceptionHandler {

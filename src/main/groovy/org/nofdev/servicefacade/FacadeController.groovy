@@ -1,42 +1,36 @@
-package org.nofdev.servicefacade;
+package org.nofdev.servicefacade
+import com.fasterxml.jackson.core.JsonProcessingException
+import com.fasterxml.jackson.databind.JavaType
+import com.fasterxml.jackson.databind.ObjectMapper
+import groovy.transform.CompileStatic
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
+import org.slf4j.MDC
+import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.context.ApplicationContext
+import org.springframework.http.HttpHeaders
+import org.springframework.http.HttpStatus
+import org.springframework.http.ResponseEntity
+import org.springframework.util.ReflectionUtils
+import org.springframework.web.bind.annotation.*
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.JavaType;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.joda.JodaModule;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.ApplicationContext;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.util.ReflectionUtils;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
-
-import java.io.IOException;
-import java.lang.reflect.Method;
-import java.lang.reflect.Type;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
-
-
+import java.lang.reflect.Method
+import java.lang.reflect.Type
 /**
  * Created by wangxuesong on 15/8/14.
  */
 @RestController
 @RequestMapping("/facade")
+@CompileStatic
 public class FacadeController {
-
 
     private static final Logger logger = LoggerFactory.getLogger(FacadeController.class);
 
     @Autowired
-    private ExceptionSettings excepitonSettings;
+    private ObjectMapper objectMapper
+
+    @Autowired
+    private ExceptionSettings exceptionSettings;
 
     @Autowired
     private ApplicationContext context;
@@ -45,9 +39,25 @@ public class FacadeController {
     public ResponseEntity<HttpJsonResponse> json(@PathVariable String packageName,
                                                  @PathVariable String interfaceName,
                                                  @PathVariable String methodName,
-                                                 @RequestParam(value = "params", required = false) String params) {
+                                                 @RequestParam(value = "params", required = false) String params,
+                                                 @RequestHeader(required = false) Map<String, String> header) {
+        logger.debug("init service context: "+objectMapper.writeValueAsString(header))
+        def serviceContext = extractServiceContent(header)
+        def callId = serviceContext?.getCallId()
+        def thisId = UUID.randomUUID().toString()
+        if (callId) {
+            callId.parent = callId.id
+            callId.id = thisId
+        } else {
+            callId = new CallId(id: thisId, root: thisId)
+            serviceContext.setCallId(callId)
+        }
+
+        MDC.put(ServiceContext.CALLID.toString(), objectMapper.writeValueAsString(callId))
+        ServiceContextHolder.setServiceContext(serviceContext)
+
         HttpJsonResponse<Object> httpJsonResponse = new HttpJsonResponse<>();
-        httpJsonResponse.setCallId(UUID.randomUUID().toString());
+        httpJsonResponse.setCallId(thisId);
         httpJsonResponse.setVal(packageName);
         if (!interfaceName.endsWith("Facade")) {
             interfaceName += "Facade";
@@ -63,7 +73,7 @@ public class FacadeController {
             Object service = context.getBean(interfaceClazz);
 
             if (service == null) {
-                throw new UnhandledException();//TODO 这里要抛出一个404
+                throw new ServiceNotFoundException();
             }
 
             Method[] methods = ReflectionUtils.getAllDeclaredMethods(interfaceClazz);
@@ -81,32 +91,51 @@ public class FacadeController {
                     val = ReflectionUtils.invokeMethod(method, service);
                 }
             } else {
-                throw new UnhandledException();//TODO 这里要抛出一个404
+                throw new ServiceNotFoundException();
             }
         } catch (AbstractBusinessException e) {
             logger.info(e.getMessage(), e);
-            httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
+//            httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
             exceptionMessage = formatException(e);
         } catch (Exception e) {
             logger.error(e.getMessage(), e);
-            httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
+//            httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
             exceptionMessage = formatException(new UnhandledException(e));
         }
 
         httpJsonResponse.setVal(val);
         httpJsonResponse.setErr(exceptionMessage);
 
-        return new ResponseEntity<HttpJsonResponse>(httpJsonResponse, httpStatus);
+        def httpHeaders = new HttpHeaders()
+
+        serviceContext.each { k, v ->
+            if (k == ServiceContext.CALLID) {
+                httpHeaders.add(k, objectMapper.writeValueAsString(v))
+            } else {
+                httpHeaders.add(k, v?.toString())
+            }
+        }
+
+        def responseEntity = new ResponseEntity<HttpJsonResponse>(httpJsonResponse, httpHeaders, httpStatus)
+        return responseEntity
+    }
+
+    private ServiceContext extractServiceContent(Map<String, String> header) {
+        def serviceContext = new ServiceContext()
+        header.each { k, v ->
+            if (k.toLowerCase() == ServiceContext.CALLID.toString().toLowerCase()) {
+                def callId = objectMapper.readValue(v, CallId.class)
+                serviceContext.setCallId(callId)
+            } else if (k.toLowerCase().startsWith(ServiceContext.PREFIX.toString().toLowerCase())) {
+                serviceContext.put(k, v)
+            } else {
+                //什么都不干
+            }
+        }
+        serviceContext
     }
 
     private List deserialize(String rawParams, Type[] paramTypes) throws IOException {
-        ObjectMapper objectMapper = new ObjectMapper();
-        objectMapper.configure(DeserializationFeature.ACCEPT_SINGLE_VALUE_AS_ARRAY, true);
-        objectMapper.registerModule(new JodaModule());
-
-        //TODO 需要进一步考证决定是否使用
-        objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-
         List methodParams = objectMapper.readValue(rawParams, List.class);
         List<Object> params = new ArrayList<>();
         for (int i = 0; i < methodParams.size(); i++) {
@@ -124,10 +153,10 @@ public class FacadeController {
         exceptionMessage.setName(throwable.getClass().getName());
         exceptionMessage.setMsg(throwable.getMessage());
         exceptionMessage.setCause(formatException(throwable.getCause()));
-        if (excepitonSettings.getIsTraceStack()) {
+        if (exceptionSettings && exceptionSettings.getIsTraceStack()) {
             logger.debug("The exception message will return trace info");
             try {
-                exceptionMessage.setStack(new ObjectMapper().writeValueAsString(throwable.getStackTrace()));
+                exceptionMessage.setStack(objectMapper.writeValueAsString(throwable.getStackTrace()));
             } catch (JsonProcessingException e) {
                 e.printStackTrace();
             }

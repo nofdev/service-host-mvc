@@ -3,6 +3,7 @@ package org.nofdev.servicefacade
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.mockito.internal.matchers.NotNull
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.MediaType
 import org.springframework.stereotype.Service
@@ -12,6 +13,7 @@ import org.springframework.test.context.web.WebAppConfiguration
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.setup.MockMvcBuilders
 import org.springframework.web.context.WebApplicationContext
+
 import java.nio.charset.Charset
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
@@ -51,6 +53,7 @@ class FacadeControllerTest {
         mockMvc.perform(get("/facade/json/org.nofdev.servicefacade/Demo/method1"))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(APPLICATION_JSON_UTF8))
+                .andExpect(header().string(ServiceContext.CALLID, NotNull.NOT_NULL))
         //TODO 乱写一个地址的状态码是竟然200, 如/aa/facade/json/org.nofdev.servicefacade/Demo/method1
     }
 }
