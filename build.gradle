@@ -9,7 +9,7 @@ repositories {
 }
 
 group = 'org.nofdev'
-version = '0.1.2-SNAPSHOT'
+version = '1.0.0'
 sourceCompatibility = 1.8
 targetCompatibility = 1.8
 
@@ -24,7 +24,7 @@ dependencies {
     compile "org.codehaus.groovy:groovy-all:2.4.4"
     compile "org.springframework:spring-webmvc:4.1.7.RELEASE"
 //    compile "org.springframework.boot:spring-boot:1.2.5.RELEASE"
-    compile (group: 'org.nofdev', name: 'service-core', version: '0.1.0-SNAPSHOT', changing: true)
+    compile (group: 'org.nofdev', name: 'service-core', version: '1.0.0')
     compile "org.slf4j:slf4j-api:1.7.12"
     compile "com.fasterxml.jackson.core:jackson-core:2.6.3"
     compile "com.fasterxml.jackson.core:jackson-databind:2.6.3"
@@ -51,7 +51,7 @@ apply plugin: 'maven'
 uploadArchives {
     repositories {
         mavenDeployer {
-            repository(url: "http://10.32.11.210:8081/nexus/content/repositories/snapshots/") {
+            repository(url: "http://10.32.11.210:8081/nexus/content/repositories/thirdparty/") {
                 authentication(userName: mavenUser, password: mavenPassword)
             }
         }
