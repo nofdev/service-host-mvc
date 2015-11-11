@@ -1,5 +1,6 @@
 package org.nofdev.servicefacade
 
+import org.hamcrest.core.StringContains
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -55,6 +56,15 @@ class FacadeControllerTest {
                 .andExpect(content().contentType(APPLICATION_JSON_UTF8))
                 .andExpect(header().string(ServiceContext.CALLID, NotNull.NOT_NULL))
         //TODO 乱写一个地址的状态码是竟然200, 如/aa/facade/json/org.nofdev.servicefacade/Demo/method1
+    }
+
+    @Test
+    public void bugfixTestDeserialize() {
+        mockMvc.perform(get("/facade/json/org.nofdev.servicefacade/Demo/getAllAttendUsers?params=[{}]"))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(APPLICATION_JSON_UTF8))
+                .andExpect(header().string(ServiceContext.CALLID, NotNull.NOT_NULL))
+                .andExpect(content().string(StringContains.containsString("\"err\":null")))
     }
 }
 
