@@ -11,6 +11,7 @@ import org.springframework.context.ApplicationContext
 import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
+import org.springframework.stereotype.Service
 import org.springframework.util.ReflectionUtils
 import org.springframework.web.bind.annotation.*
 
@@ -72,7 +73,8 @@ public class FacadeController {
             Class<?> interfaceClazz = classLoader.loadClass(interfaceName);
             Object service = context.getBean(interfaceClazz);
 
-            if (service == null) {
+            logger.debug("")
+            if (!service || !service.class.getAnnotation(Service)) {
                 throw new ServiceNotFoundException();
             }
 
