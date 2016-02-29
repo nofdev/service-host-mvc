@@ -57,6 +57,7 @@ task javadocJar(type: Jar, dependsOn: javadoc) {
     from javadoc.destinationDir
 }
 
+// ./gradlew publish -PmavenUser=deployment -PmavenPassword=xxx
 publishing{
     publications {
         mavenJava(MavenPublication) {
@@ -67,7 +68,7 @@ publishing{
     }
     repositories {
         maven {
-            url "http://10.32.11.210:8081/nexus/content/repositories/snapshots/"
+            url "http://10.32.11.210:8081/nexus/content/repositories/thirdparty/"
             credentials {
                 username mavenUser
                 password mavenPassword
@@ -75,14 +76,3 @@ publishing{
         }
     }
 }
-
-// ./gradlew uploadArchives -PmavenUser=deployment -PmavenPassword=xxx
-//uploadArchives {
-//    repositories {
-//        mavenDeployer {
-//            repository(url: "http://10.32.11.210:8081/nexus/content/repositories/thirdparty/") {
-//                authentication(userName: mavenUser, password: mavenPassword)
-//            }
-//        }
-//    }
-//}
