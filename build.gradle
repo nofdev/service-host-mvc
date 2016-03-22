@@ -1,7 +1,6 @@
 apply plugin: 'java'
 apply plugin: 'groovy'
 apply plugin: 'idea'
-apply plugin: 'maven-publish'
 
 repositories {
     maven { url "http://10.32.11.210:8081/nexus/content/groups/public" }
@@ -46,6 +45,13 @@ task wrapper(type: Wrapper) {
     gradleVersion = '2.5'
 }
 
+apply plugin: 'maven-publish'
+apply plugin: 'signing'
+
+def isMvnCentral
+if (hasProperty("mavenCentral")) {
+    isMvnCentral = mavenCentral
+}
 
 task sourceJar(type: Jar, dependsOn: classes) {
     classifier = 'sources'
@@ -57,22 +63,136 @@ task javadocJar(type: Jar, dependsOn: javadoc) {
     from javadoc.destinationDir
 }
 
-// ./gradlew publish -PmavenUser=deployment -PmavenPassword=xxx
-publishing{
+ext {
+    pomFilePath = "${project.projectDir}/tmp/pom.xml"
+    pomFile = file(pomFilePath)
+}
+configurations {
+    pom
+}
+
+// summarize artifacts
+artifacts {
+    archives jar
+    archives sourceJar
+    archives javadocJar
+    if (pomFile.exists()) {
+        pom pomFile
+    }
+}
+
+// sign all artifacts
+task signJars(type: Sign, dependsOn: [jar, javadocJar, sourceJar]) {
+    sign configurations.archives
+}
+
+// sign pom
+task signPom(type: Sign) {
+    sign configurations.pom
+}
+
+// defining which tasks should be called
+if (project.ext.pomFile.exists()) {
+    task preparePublication(dependsOn: [signJars, signPom])
+} else {
+    task preparePublication(dependsOn: signJars)
+}
+
+// extract signature file and give them proper name
+def getSignatureFiles = {
+    def allFiles = project.tasks.signJars.signatureFiles.collect { it }
+    def signedSources = allFiles.find { it.name.contains('-sources') }
+    def signedJavadoc = allFiles.find { it.name.contains('-javadoc') }
+    def signedJar = (allFiles - [signedSources, signedJavadoc])[0]
+    return [
+            [archive: signedSources, classifier: 'sources', extension: 'jar.asc'],
+            [archive: signedJavadoc, classifier: 'javadoc', extension: 'jar.asc'],
+            [archive: signedJar, classifier: null, extension: 'jar.asc']
+    ]
+}
+
+// extract pom signature
+def getPomSignature = {
+    return project.tasks.signPom.signatureFiles.collect { it }[0]
+}
+
+// ./gradlew clean pP publish -PmavenUrl=xxx -PmavenUser=xxx -PmavenPassword=xxx -Psigning.keyId=xxx -Psigning.password=xxx -Psigning.secretKeyRingFile=xxx -PisMvnCentral=true
+publishing {
     publications {
-        mavenJava(MavenPublication) {
+        jar(MavenPublication) {
             from components.java
+            pom.withXml {
+                // add required elements
+                asNode().children().last() + {
+                    resolveStrategy = Closure.DELEGATE_FIRST
+                    name 'service-host-mvc'
+                    description 'The server side componet of Nofdev RPC framework'
+                    url 'https://github.com/nofdev/service-host-mvc'
+                    scm {
+                        url 'https://github.com/nofdev/service-host-mvc.git'
+                        connection 'scm:git:git://github.com/nofdev/service-host-mvc.git'
+                        developerConnection 'scm:git:ssh:git@github.com:nofdev/service-host-mvc.git'
+                    }
+                    licenses {
+                        license {
+                            name 'The Apache Software License, Version 2.0'
+                            url 'http://www.apache.org/license/LICENSE-2.0.txt'
+                            distribution 'repo'
+                        }
+                    }
+                    developers {
+                        developer {
+                            id 'mengqiang'
+                            name 'Quincy Meng'
+                            email 'mengqiang81@gmail.com'
+                        }
+                    }
+                }
+            }
             artifact sourceJar
             artifact javadocJar
+
         }
+
+        gpgJars(MavenPublication) {
+            getSignatureFiles().each { signature ->
+                artifact(signature.archive) {
+                    classifier = signature.classifier
+                    extension = signature.extension
+                }
+            }
+        }
+
+        if (project.ext.pomFile.exists()) {
+            gpgPom(MavenPublication) {
+                artifact(getPomSignature()) {
+                    classifier = null
+                    extension = 'pom.asc'
+                }
+            }
+        }
+
     }
     repositories {
-        maven {
-            url "http://10.32.11.210:8081/nexus/content/repositories/thirdparty/"
-            credentials {
-                username mavenUser
-                password mavenPassword
+        if (project.ext.pomFile.exists() && isMvnCentral == "true") {
+            maven {
+                url mavenUrl
+                credentials {
+                    username mavenUser
+                    password mavenPassword
+                }
             }
+        } else {
+            mavenLocal()
+        }
+    }
+}
+
+model {
+    println isMvnCentral
+    if (isMvnCentral == "true") {
+        tasks.generatePomFileForJarPublication {
+            destination = project.ext.pomFile
         }
     }
 }
