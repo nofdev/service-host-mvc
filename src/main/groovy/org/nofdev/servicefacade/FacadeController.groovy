@@ -73,7 +73,7 @@ public class FacadeController {
             Class<?> interfaceClazz = classLoader.loadClass(interfaceName);
             Object service = context.getBean(interfaceClazz);
 
-            logger.debug("")
+            logger.debug("To prevent exposing remote services")
             if (!service || !service.class.getAnnotation(Service)) {
                 throw new ServiceNotFoundException();
             }
