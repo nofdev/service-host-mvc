@@ -116,7 +116,8 @@ def getPomSignature = {
     return project.tasks.signPom.signatureFiles.collect { it }[0]
 }
 
-// ./gradlew clean pP publish -PmavenUrl=xxx -PmavenUser=xxx -PmavenPassword=xxx -Psigning.keyId=xxx -Psigning.password=xxx -Psigning.secretKeyRingFile=xxx -PisMvnCentral=true
+// ./graldew clean generatePomFileForJarPublication -PisMavenCentral=true
+// ./gradlew clean pP publish -PmavenUrl=xxx -PmavenUser=xxx -PmavenPassword=xxx -Psigning.keyId=xxx -Psigning.password=xxx -Psigning.secretKeyRingFile=xxx -PisMavenCentral=true
 publishing {
     publications {
         jar(MavenPublication) {
@@ -152,25 +153,37 @@ publishing {
             artifact sourceJar
             artifact javadocJar
 
-        }
-
-        gpgJars(MavenPublication) {
-            getSignatureFiles().each { signature ->
-                artifact(signature.archive) {
-                    classifier = signature.classifier
-                    extension = signature.extension
+            if (project.ext.pomFile.exists() && isMvnCentral == "true") {
+                getSignatureFiles().each { signature ->
+                    artifact(signature.archive) {
+                        classifier = signature.classifier
+                        extension = signature.extension
+                    }
                 }
-            }
-        }
-
-        if (project.ext.pomFile.exists()) {
-            gpgPom(MavenPublication) {
                 artifact(getPomSignature()) {
                     classifier = null
                     extension = 'pom.asc'
                 }
             }
         }
+
+//        gpgJars(MavenPublication) {
+//            getSignatureFiles().each { signature ->
+//                artifact(signature.archive) {
+//                    classifier = signature.classifier
+//                    extension = signature.extension
+//                }
+//            }
+//        }
+//
+//        if (project.ext.pomFile.exists()) {
+//            gpgPom(MavenPublication) {
+//                artifact(getPomSignature()) {
+//                    classifier = null
+//                    extension = 'pom.asc'
+//                }
+//            }
+//        }
 
     }
     repositories {
@@ -188,8 +201,8 @@ publishing {
     }
 }
 
+//gradle generatePomFileForJarPublication
 model {
-    println isMvnCentral
     if (isMvnCentral == "true") {
         tasks.generatePomFileForJarPublication {
             destination = project.ext.pomFile
