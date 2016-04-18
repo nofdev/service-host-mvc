@@ -19,11 +19,14 @@ TODO 返回值对日期的序列化默认为 long 类型的时间戳, 如果要�
 Refer: [https://github.com/yintai/generator-yintai-springboot](https://github.com/yintai/generator-yintai-springboot) sample test
 
 ### Request
-'''
+
+
+```bash
 curl -XGET https://demo.yintai.com/facade/json/com.yintai.demo/Demo/hello?params=["hello"]
-'''
+```
 
 ### Response
-'''
- {"val":"hello",callId":"f354e509-46de-4b1f-9fe6-ec1b3fdd1917","err":null}
-'''
+
+```json
+ {"val":"hello", "callId":"f354e509-46de-4b1f-9fe6-ec1b3fdd1917", "err":null}
+```
