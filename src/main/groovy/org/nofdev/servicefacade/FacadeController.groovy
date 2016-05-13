@@ -1,4 +1,5 @@
 package org.nofdev.servicefacade
+
 import com.fasterxml.jackson.core.JsonProcessingException
 import com.fasterxml.jackson.databind.JavaType
 import com.fasterxml.jackson.databind.ObjectMapper
@@ -6,6 +7,7 @@ import groovy.transform.CompileStatic
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.slf4j.MDC
+import org.springframework.aop.framework.AopProxyUtils
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.ApplicationContext
 import org.springframework.http.HttpHeaders
@@ -72,9 +74,9 @@ public class FacadeController {
             ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
             Class<?> interfaceClazz = classLoader.loadClass(interfaceName);
             Object service = context.getBean(interfaceClazz);
-
-            logger.debug("To prevent exposing remote services")
-            if (!service || !service.class.getAnnotation(Service)) {
+            Class utltimate = AopProxyUtils.ultimateTargetClass(service)
+            logger.debug("To prevent exposing remote services, the service is ${service} and the service annotations are ${utltimate.annotations}")
+            if (!service || !utltimate.isAnnotationPresent(Service.class)) {
                 throw new ServiceNotFoundException();
             }
 

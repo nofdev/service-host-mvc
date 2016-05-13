@@ -10,7 +10,6 @@ repositories {
 }
 
 group = 'org.nofdev'
-version = '1.0.9'
 sourceCompatibility = 1.8
 targetCompatibility = 1.8
 
@@ -116,7 +115,7 @@ def getPomSignature = {
     return project.tasks.signPom.signatureFiles.collect { it }[0]
 }
 
-// ./graldew clean generatePomFileForJarPublication -PisMavenCentral=true
+// ./gradlew clean generatePomFileForJarPublication -PisMavenCentral=true
 // ./gradlew clean pP publish -PmavenUrl=xxx -PmavenUser=xxx -PmavenPassword=xxx -Psigning.keyId=xxx -Psigning.password=xxx -Psigning.secretKeyRingFile=xxx -PisMavenCentral=true
 publishing {
     publications {
