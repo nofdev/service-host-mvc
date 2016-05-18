@@ -1,11 +1,11 @@
 package org.nofdev.servicefacade
+
 import com.fasterxml.jackson.core.JsonProcessingException
 import com.fasterxml.jackson.databind.JavaType
 import com.fasterxml.jackson.databind.ObjectMapper
 import groovy.transform.CompileStatic
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
-import org.slf4j.MDC
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.ApplicationContext
 import org.springframework.http.HttpHeaders
@@ -40,29 +40,15 @@ public class ServiceController {
                                                  @PathVariable String methodName,
                                                  @RequestParam(value = "params", required = false) String params,
                                                  @RequestHeader(required = false) Map<String, String> header) {
-        logger.debug("init service context: "+objectMapper.writeValueAsString(header))
-        def serviceContext = extractServiceContent(header)
-        def callId = serviceContext?.getCallId()
-        def thisId = UUID.randomUUID().toString()
-        if (callId) {
-            callId.parent = callId.id
-            callId.id = thisId
-        } else {
-            callId = new CallId(id: thisId, root: thisId)
-            serviceContext.setCallId(callId)
-        }
-
-        MDC.put(ServiceContext.CALLID.toString(), objectMapper.writeValueAsString(callId))
-        ServiceContextHolder.setServiceContext(serviceContext)
+        def serviceContext = ServiceContextHolder.serviceContext
 
         HttpJsonResponse<Object> httpJsonResponse = new HttpJsonResponse<>();
-        httpJsonResponse.setCallId(UUID.randomUUID().toString());
+        httpJsonResponse.setCallId(serviceContext?.getCallId()?.id);
         httpJsonResponse.setVal(packageName);
         if (!interfaceName.endsWith("Service")) {
             interfaceName += "Service";
         }
         interfaceName = packageName + '.' + interfaceName;
-        logger.info("JSON facade call(callId:{}): {}.{}{}", httpJsonResponse.getCallId(), interfaceName, methodName, params);
         Object val = null;
         ExceptionMessage exceptionMessage = null;
         HttpStatus httpStatus = HttpStatus.OK;
@@ -119,21 +105,6 @@ public class ServiceController {
 
         def responseEntity = new ResponseEntity<HttpJsonResponse>(httpJsonResponse, httpHeaders, httpStatus)
         return responseEntity
-    }
-
-    private ServiceContext extractServiceContent(Map<String, String> header) {
-        def serviceContext = new ServiceContext()
-        header.each { k, v ->
-            if (k.toLowerCase() == ServiceContext.CALLID.toString().toLowerCase()) {
-                def callId = objectMapper.readValue(v, CallId.class)
-                serviceContext.setCallId(callId)
-            } else if (k.toLowerCase().startsWith(ServiceContext.PREFIX.toString().toLowerCase())) {
-                serviceContext.put(k, v)
-            } else {
-                //什么都不干
-            }
-        }
-        serviceContext
     }
 
     private List deserialize(String rawParams, Type[] paramTypes) throws IOException {

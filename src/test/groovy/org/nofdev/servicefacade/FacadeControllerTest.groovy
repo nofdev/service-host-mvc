@@ -1,5 +1,6 @@
 package org.nofdev.servicefacade
 
+import groovy.util.logging.Slf4j
 import org.hamcrest.core.StringContains
 import org.junit.Before
 import org.junit.Test
@@ -27,6 +28,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(classes = [WebAppContext])
 @WebAppConfiguration
+@Slf4j
 class FacadeControllerTest {
 
     private MockMvc mockMvc;
@@ -36,8 +38,6 @@ class FacadeControllerTest {
 
     private static MediaType APPLICATION_JSON_UTF8
 
-//    @Autowired
-//    FacadeController facadeController
 
     @Before
     public void setUp() {
