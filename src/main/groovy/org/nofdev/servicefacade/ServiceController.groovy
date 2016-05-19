@@ -6,16 +6,19 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import groovy.transform.CompileStatic
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import org.springframework.aop.framework.AopProxyUtils
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.ApplicationContext
 import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
+import org.springframework.stereotype.Service
 import org.springframework.util.ReflectionUtils
 import org.springframework.web.bind.annotation.*
 
 import java.lang.reflect.Method
 import java.lang.reflect.Type
+
 /**
  * Created by wangxuesong on 15/8/14.
  */
@@ -56,8 +59,9 @@ public class ServiceController {
             ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
             Class<?> interfaceClazz = classLoader.loadClass(interfaceName);
             Object service = context.getBean(interfaceClazz);
-
-            if (service == null) {
+            Class utltimate = AopProxyUtils.ultimateTargetClass(service)
+            logger.debug("To prevent exposing remote services, the service is ${service} and the service annotations are ${utltimate.annotations}")
+            if (!service || !utltimate.isAnnotationPresent(Service.class)) {
                 throw new ServiceNotFoundException();
             }
 
