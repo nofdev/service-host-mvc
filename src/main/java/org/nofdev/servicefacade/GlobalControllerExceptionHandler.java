@@ -9,10 +9,6 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 
-/**
- * Created by wangxuesong on 15/8/14.
- * TODO 这个类不起作用, 没有使用全局异常处理机制
- */
 @ControllerAdvice
 public class GlobalControllerExceptionHandler {
     protected Logger logger;
@@ -20,14 +16,6 @@ public class GlobalControllerExceptionHandler {
     public GlobalControllerExceptionHandler() {
         logger = LoggerFactory.getLogger(getClass());
     }
-
-    /**
-     * 处理业务异常
-     *
-     * @param e 业务异常
-     * @return 格式化后的异常
-     * @throws Exception
-     */
     @ExceptionHandler
     @ResponseStatus(value = HttpStatus.INTERNAL_SERVER_ERROR)
     @ResponseBody
@@ -38,12 +26,6 @@ public class GlobalControllerExceptionHandler {
         return formatException(e);
     }
 
-    /**
-     * 处理系统异常
-     *
-     * @param e 系统异常
-     * @return 异常消息
-     */
     @ResponseStatus(value = HttpStatus.INTERNAL_SERVER_ERROR)
     @ExceptionHandler
     @ResponseBody

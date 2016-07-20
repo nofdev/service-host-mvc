@@ -3,6 +3,7 @@ apply plugin: 'groovy'
 apply plugin: 'idea'
 
 repositories {
+    mavenLocal()
     maven { url "http://10.32.11.210:8081/nexus/content/groups/public" }
     jcenter()
     maven { url "http://repo.spring.io/snapshot" }
@@ -23,7 +24,7 @@ configurations.all {
 dependencies {
     compile "org.codehaus.groovy:groovy-all:2.4.4"
     compile "org.springframework:spring-webmvc:4.1.7.RELEASE"
-    compile (group: 'org.nofdev', name: 'service-core', version: '1.0.3')
+    compile (group: 'org.nofdev', name: 'service-core', version: '1.0.4')
     compile "org.slf4j:slf4j-api:1.7.12"
     compile "com.fasterxml.jackson.core:jackson-databind:2.6.3"
     compile "com.fasterxml.jackson.datatype:jackson-datatype-joda:2.6.3"
