@@ -1,9 +1,7 @@
 package org.nofdev.servicefacade
-
 import com.fasterxml.jackson.core.JsonProcessingException
 import com.fasterxml.jackson.databind.JavaType
 import com.fasterxml.jackson.databind.ObjectMapper
-import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import org.nofdev.excption.BatchException
 import org.springframework.aop.framework.AopProxyUtils
@@ -20,12 +18,9 @@ import java.lang.reflect.Method
 import java.lang.reflect.Type
 import java.util.concurrent.CompletableFuture
 import java.util.stream.Collectors
-
 /**
  * Created by Liutengfei on 2016/7/19 0019.
  */
-
-@CompileStatic
 @Slf4j
 @RestController
 @RequestMapping("/batch")
@@ -50,9 +45,6 @@ class BatchController {
         HttpJsonResponse<Object> httpJsonResponse = new HttpJsonResponse<>();
         httpJsonResponse.setCallId(serviceContext?.getCallId()?.id);
         httpJsonResponse.setVal(packageName);
-        if (!interfaceName.endsWith("Facade")) {
-            interfaceName += "Facade";
-        }
         interfaceName = packageName + '.' + interfaceName;
         Object val = null;
         ExceptionMessage exceptionMessage = new ExceptionMessage();
