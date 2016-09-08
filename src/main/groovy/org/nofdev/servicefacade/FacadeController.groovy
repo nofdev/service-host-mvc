@@ -62,7 +62,7 @@ public class FacadeController {
             Class utltimate = AopProxyUtils.ultimateTargetClass(service)
             logger.debug("To prevent exposing remote services, the service is ${service} and the service annotations are ${utltimate.annotations}")
             if (!service || !utltimate.isAnnotationPresent(Service.class)) {
-                throw new BatchException();
+                throw new ServiceNotFoundException();
             }
 
             Method[] methods = ReflectionUtils.getAllDeclaredMethods(interfaceClazz);
@@ -80,7 +80,7 @@ public class FacadeController {
                     val = ReflectionUtils.invokeMethod(method, service);
                 }
             } else {
-                throw new BatchException();
+                throw new ServiceNotFoundException();
             }
         } catch (AbstractBusinessException e) {
             logger.info(e.getMessage(), e);
