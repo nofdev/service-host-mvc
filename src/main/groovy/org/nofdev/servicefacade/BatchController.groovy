@@ -3,6 +3,7 @@ package org.nofdev.servicefacade
 import com.fasterxml.jackson.core.JsonProcessingException
 import com.fasterxml.jackson.databind.JavaType
 import com.fasterxml.jackson.databind.ObjectMapper
+import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import org.nofdev.exception.BatchException
 import org.springframework.aop.framework.AopProxyUtils
@@ -19,13 +20,13 @@ import java.lang.reflect.Method
 import java.lang.reflect.Type
 import java.util.concurrent.CompletableFuture
 import java.util.stream.Collectors
-
 /**
  * Created by Liutengfei on 2016/7/19 0019.
  */
 @Slf4j
 @RestController
 @RequestMapping("/batch")
+@CompileStatic
 class BatchController {
     @Autowired
     private ObjectMapper objectMapper
@@ -83,7 +84,7 @@ class BatchController {
                         CompletableFuture future = CompletableFuture.supplyAsync({
                             Object obj = ReflectionUtils.invokeMethod(method, service, deserialize(paramStr, method.getGenericParameterTypes()).toArray())
                             return result.put(key, obj)
-                        }).exceptionally({ e ->
+                        }).exceptionally({ Throwable e ->
                             log.info("", e);
                             ExceptionMessage innerExceptionMessage = new ExceptionMessage()
                             innerExceptionMessage = formatException(innerExceptionMessage, e)
@@ -95,7 +96,7 @@ class BatchController {
 
                     CompletableFuture<Void> allDoneFuture = CompletableFuture.allOf(futures.toArray(new CompletableFuture[futures.size()]));
                     CompletableFuture<List> listFuture = allDoneFuture
-                            .thenApply({ v -> futures.parallelStream().map({ f -> f.join() }).collect(Collectors.toList())
+                            .thenApply({ v -> futures.parallelStream().map({CompletableFuture f -> f.join() }).collect(Collectors.toList())
                     })
                     listFuture.get()
                     val = result
