@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.*
 
 import java.lang.reflect.Method
 import java.lang.reflect.Type
+
 /**
  * Created by wangxuesong on 15/8/14.
  */
@@ -65,7 +66,7 @@ public class FacadeController {
                 throw new ServiceNotFoundException();
             }
 
-            Method[] methods = ReflectionUtils.getAllDeclaredMethods(interfaceClazz);
+            Method[] methods = interfaceClazz.getMethods();
             Method method = null;
             for (Method m : methods) {
                 if (methodName.equals(m.getName())) {
