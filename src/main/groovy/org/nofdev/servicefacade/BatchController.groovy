@@ -37,6 +37,9 @@ class BatchController {
     @Autowired
     private ApplicationContext context;
 
+    @Autowired
+    private Authentication authentication;
+
     @RequestMapping("json/{packageName}/{interfaceName}/{methodName}")
     public ResponseEntity<HttpJsonResponse> json(@PathVariable String packageName,
                                                  @PathVariable String interfaceName,
@@ -71,6 +74,8 @@ class BatchController {
                 }
             }
             if (method != null) {
+                if(authentication){authentication.tokenToUser(packageName,interfaceName,methodName, params,header)}
+
                 Map result = new LinkedHashMap()
                 List<CompletableFuture> futures = new ArrayList<>()
                 exceptionMessage.children = new HashMap<>()

@@ -37,6 +37,9 @@ public class FacadeController {
     @Autowired
     private ApplicationContext context;
 
+    @Autowired
+    private Authentication authentication;
+
     @RequestMapping("json/{packageName}/{interfaceName}/{methodName}")
     public ResponseEntity<HttpJsonResponse> json(@PathVariable String packageName,
                                                  @PathVariable String interfaceName,
@@ -74,6 +77,8 @@ public class FacadeController {
                 }
             }
             if (method != null) {
+                if(authentication){authentication.tokenToUser(packageName,interfaceName,methodName, params,header)}
+
                 if (params != null && !"null".equals(params)) {
                     val = ReflectionUtils.invokeMethod(method, service, deserialize(params, method.getGenericParameterTypes()).toArray());
                 } else {

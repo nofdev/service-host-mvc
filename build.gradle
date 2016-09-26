@@ -23,7 +23,7 @@ configurations.all {
 dependencies {
     compile "org.codehaus.groovy:groovy-all:2.4.4"
     compile "org.springframework:spring-webmvc:4.1.7.RELEASE"
-    compile "org.nofdev:service-core:1.2.1"
+    compile "org.nofdev:service-core:1.2.2"
     compile "org.slf4j:slf4j-api:1.7.12"
     compile "com.fasterxml.jackson.core:jackson-databind:2.6.3"
     compile "com.fasterxml.jackson.datatype:jackson-datatype-joda:2.6.3"
