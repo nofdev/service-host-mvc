@@ -37,7 +37,7 @@ public class ServiceController {
     @Autowired
     private ObjectMapper objectMapper
 
-    @Autowired
+    @Autowired(required = false)
     private Authentication authentication;
 
     @RequestMapping("json/{packageName}/{interfaceName}/{methodName}")

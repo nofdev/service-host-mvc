@@ -37,7 +37,7 @@ class BatchController {
     @Autowired
     private ApplicationContext context;
 
-    @Autowired
+    @Autowired(required = false)
     private Authentication authentication;
 
     @RequestMapping("json/{packageName}/{interfaceName}/{methodName}")

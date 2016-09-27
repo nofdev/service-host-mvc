@@ -7,6 +7,7 @@ repositories {
     jcenter()
     maven { url "http://repo.spring.io/snapshot" }
     maven { url "http://repo.spring.io/milestone" }
+    maven { url "http://10.32.11.210:8081/nexus/content/groups/public" }
 }
 
 group = 'org.nofdev'
@@ -50,6 +51,10 @@ apply plugin: 'maven-publish'
 apply plugin: 'signing'
 
 def isMvnCentral
+def isMvnSign
+if (hasProperty("isMavenSign")) {
+    isMvnSign = isMavenSign
+}
 if (hasProperty("isMavenCentral")) {
     isMvnCentral = isMavenCentral
 }
@@ -93,10 +98,10 @@ task signPom(type: Sign) {
 }
 
 // defining which tasks should be called
-if (project.ext.pomFile.exists()) {
+if (project.ext.pomFile.exists() && isMvnCentral == "true" && isMavenSign == "true") {
     task preparePublication(dependsOn: [signJars, signPom])
 } else {
-    task preparePublication(dependsOn: signJars)
+//    task preparePublication(dependsOn: signJars)
 }
 
 // extract signature file and give them proper name
@@ -154,7 +159,7 @@ publishing {
             artifact sourceJar
             artifact javadocJar
 
-            if (project.ext.pomFile.exists() && isMvnCentral == "true") {
+            if (project.ext.pomFile.exists() && isMvnCentral == "true" && isMavenSign == "true") {
                 getSignatureFiles().each { signature ->
                     artifact(signature.archive) {
                         classifier = signature.classifier
