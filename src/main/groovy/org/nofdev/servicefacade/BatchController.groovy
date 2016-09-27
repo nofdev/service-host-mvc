@@ -65,7 +65,7 @@ class BatchController {
                 throw new BatchException();
             }
 
-            Method[] methods = ReflectionUtils.getAllDeclaredMethods(interfaceClazz);
+            Method[] methods = interfaceClazz.getMethods();
             Method method = null;
             for (Method m : methods) {
                 if (methodName.equals(m.getName())) {
