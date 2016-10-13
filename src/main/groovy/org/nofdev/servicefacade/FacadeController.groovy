@@ -130,6 +130,9 @@ public class FacadeController {
     private ExceptionMessage formatException(Throwable throwable) {
         if (throwable == null) return null;
         ExceptionMessage exceptionMessage = new ExceptionMessage();
+        if (throwable instanceof AbstractBusinessException){
+            exceptionMessage.setDatail(throwable?.datail)
+        }
         exceptionMessage.setName(throwable.getClass().getName());
         exceptionMessage.setMsg(throwable.getMessage());
         exceptionMessage.setCause(formatException(throwable.getCause()));
