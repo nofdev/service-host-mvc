@@ -119,10 +119,10 @@ public class FacadeController {
         List methodParams = objectMapper.readValue(rawParams, List.class);
         List<Object> params = new ArrayList<>();
         for (int i = 0; i < methodParams.size(); i++) {
-            logger.debug("The param {}'s type name is {}", i, paramTypes[i].toString());
+            logger.debug("The param {}'s type name is {}", i, paramTypes[i]?.toString());
             JavaType javaType = objectMapper.getTypeFactory().constructType(paramTypes[i]);
             params.add(objectMapper.convertValue(methodParams.get(i), javaType));
-            logger.debug("The converted param {}'s type name is {}", i, params.get(i).getClass().getName());
+            logger.debug("The converted param {}'s type name is {}", i, params?.get(i)?.getClass()?.getName());
         }
         return params;
     }
