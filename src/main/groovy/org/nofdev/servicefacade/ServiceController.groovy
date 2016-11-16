@@ -4,8 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException
 import com.fasterxml.jackson.databind.JavaType
 import com.fasterxml.jackson.databind.ObjectMapper
 import groovy.transform.CompileStatic
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
+import org.nofdev.logging.CustomLogger
 import org.springframework.aop.framework.AopProxyUtils
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.ApplicationContext
@@ -18,7 +17,6 @@ import org.springframework.web.bind.annotation.*
 
 import java.lang.reflect.Method
 import java.lang.reflect.Type
-
 /**
  * Created by wangxuesong on 15/8/14.
  */
@@ -27,7 +25,7 @@ import java.lang.reflect.Type
 @RequestMapping("/service")
 @CompileStatic
 public class ServiceController {
-    private static final Logger logger = LoggerFactory.getLogger(ServiceController.class);
+    private static final CustomLogger logger = CustomLogger.getLogger(ServiceController.class);
     @Autowired
     private ExceptionSettings excepitonSettings;
 
@@ -119,10 +117,20 @@ public class ServiceController {
         List methodParams = objectMapper.readValue(rawParams, List.class);
         List<Object> params = new ArrayList<>();
         for (int i = 0; i < methodParams.size(); i++) {
-            logger.debug("The param {}'s type name is {}", i, paramTypes[i].toString());
+            logger.debug("The param's type name") {
+                [
+                        paramIndex   : i,
+                        paramTypeName: paramTypes[i]?.toString()
+                ]
+            };
             JavaType javaType = objectMapper.getTypeFactory().constructType(paramTypes[i]);
             params.add(objectMapper.convertValue(methodParams.get(i), javaType));
-            logger.debug("The converted param {}'s type name is {}", i, params.get(i).getClass().getName());
+            logger.debug("The converted param's type name") {
+                [
+                        convertedParamIndex   : i,
+                        convertedParamTypeName: params?.get(i)?.getClass()?.getName()
+                ]
+            };
         }
         return params;
     }

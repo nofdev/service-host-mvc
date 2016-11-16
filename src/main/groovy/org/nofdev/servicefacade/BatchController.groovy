@@ -4,8 +4,8 @@ import com.fasterxml.jackson.core.JsonProcessingException
 import com.fasterxml.jackson.databind.JavaType
 import com.fasterxml.jackson.databind.ObjectMapper
 import groovy.transform.CompileStatic
-import groovy.util.logging.Slf4j
 import org.nofdev.exception.BatchException
+import org.nofdev.logging.CustomLogger
 import org.springframework.aop.framework.AopProxyUtils
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.ApplicationContext
@@ -23,11 +23,13 @@ import java.util.stream.Collectors
 /**
  * Created by Liutengfei on 2016/7/19 0019.
  */
-@Slf4j
 @RestController
 @RequestMapping("/batch")
 @CompileStatic
 class BatchController {
+
+    private static final CustomLogger log = CustomLogger.getLogger(BatchController.class);
+
     @Autowired
     private ObjectMapper objectMapper
 
@@ -147,10 +149,20 @@ class BatchController {
         List methodParams = objectMapper.readValue(URLDecoder.decode(rawParams, "UTF-8"), List.class);
         List<Object> params = new ArrayList<>();
         for (int i = 0; i < methodParams.size(); i++) {
-            log.debug("The param {}'s type name is {}", i, paramTypes[i].toString());
+            log.debug("The converted param's type name") {
+                [
+                        convertedParamIndex   : i,
+                        convertedParamTypeName: params?.get(i)?.getClass()?.getName()
+                ]
+            };
             JavaType javaType = objectMapper.getTypeFactory().constructType(paramTypes[i]);
             params.add(objectMapper.convertValue(methodParams.get(i), javaType));
-            log.debug("The converted param {}'s type name is {}", i, params.get(i).getClass().getName());
+            log.debug("The converted param's type name") {
+                [
+                        convertedParamIndex   : i,
+                        convertedParamTypeName: params?.get(i)?.getClass()?.getName()
+                ]
+            };
         }
         return params;
     }
