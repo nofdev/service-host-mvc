@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.core.annotation.Order
 import org.springframework.http.ResponseEntity
 import org.springframework.stereotype.Component
+
 /**
  * Created by Qiang on 5/18/16.
  */
@@ -24,12 +25,12 @@ class ServiceEntranceAspect {
     private ObjectMapper objectMapper
 
     @Pointcut("execution(public * org.nofdev.servicefacade.*Controller.json(..))")
-    void entrancePointcut() {
+    void entrancePointcut(){
 
     }
 
     @Around("entrancePointcut()")
-    Object performance(ProceedingJoinPoint joinPoint) {
+    Object performance(ProceedingJoinPoint joinPoint){
         def args = joinPoint.args
         long startTime = System.currentTimeMillis()
         def object = joinPoint.proceed()
@@ -49,7 +50,7 @@ class ServiceEntranceAspect {
 
 
     @Before("entrancePointcut()")
-    void requestLog(JoinPoint joinPoint) {
+    void requestLog(JoinPoint joinPoint){
         def args = joinPoint.args
         log.info("记录服务请求状态") {
             [
@@ -62,8 +63,8 @@ class ServiceEntranceAspect {
 //        log.info("JSON facade call: ${args[0]}.${args[1]}.${args[2]} request with params ${args[3]} and headers ${args[4]}");
     }
 
-    @AfterReturning(pointcut = "entrancePointcut()", returning = "result")
-    void responseLog(JoinPoint joinPoint, ResponseEntity<HttpJsonResponse> result) {
+    @AfterReturning(pointcut="entrancePointcut()",returning = "result")
+    void responseLog(JoinPoint joinPoint, ResponseEntity<HttpJsonResponse> result){
         def args = joinPoint.args
         log.info("记录服务响应状态") {
             [
