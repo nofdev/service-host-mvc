@@ -4,6 +4,7 @@ apply plugin: 'idea'
 
 repositories {
     mavenLocal()
+    mavenCentral()
     jcenter()
     maven { url "http://repo.spring.io/snapshot" }
     maven { url "http://repo.spring.io/milestone" }
@@ -30,6 +31,7 @@ dependencies {
     compile "com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.6.3"
     compile "org.aspectj:aspectjrt:1.8.9"
     compile "org.aspectj:aspectjweaver:1.8.9"
+    compile "org.nofdev:service-logging:1.0.0"
 
     testCompile(
             "org.slf4j:slf4j-simple:1.7.7",

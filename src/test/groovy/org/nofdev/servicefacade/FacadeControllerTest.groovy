@@ -66,6 +66,15 @@ class FacadeControllerTest {
                 .andExpect(header().string(ServiceContext.CALLID, NotNull.NOT_NULL))
                 .andExpect(content().string(StringContains.containsString("\"err\":null")))
     }
+
+    @Test
+    public void bugfixTestDeserializeForNullParam() {
+        mockMvc.perform(get("/facade/json/org.nofdev.servicefacade/Demo/getAllAttendUsers?params=[null]"))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(APPLICATION_JSON_UTF8))
+                .andExpect(header().string(ServiceContext.CALLID, NotNull.NOT_NULL))
+                .andExpect(content().string(StringContains.containsString("\"err\":null")))
+    }
 }
 
 

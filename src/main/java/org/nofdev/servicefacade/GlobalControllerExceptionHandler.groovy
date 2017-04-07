@@ -37,6 +37,9 @@ public class GlobalControllerExceptionHandler {
     private ExceptionMessage formatException(Throwable throwable) {
         if (throwable == null) return null;
         ExceptionMessage exceptionMessage = new ExceptionMessage();
+        if (throwable instanceof AbstractBusinessException){
+            exceptionMessage.setDatail(throwable?.datail)
+        }
         exceptionMessage.setName(throwable.getClass().getName());
         exceptionMessage.setMsg(throwable.getLocalizedMessage());
         exceptionMessage.setCause(formatException(throwable.getCause()));

@@ -4,8 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException
 import com.fasterxml.jackson.databind.JavaType
 import com.fasterxml.jackson.databind.ObjectMapper
 import groovy.transform.CompileStatic
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
+import org.nofdev.logging.CustomLogger
 import org.springframework.aop.framework.AopProxyUtils
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.ApplicationContext
@@ -27,7 +26,7 @@ import java.lang.reflect.Type
 @CompileStatic
 public class FacadeController {
 
-    private static final Logger logger = LoggerFactory.getLogger(FacadeController.class);
+    private static final CustomLogger logger = CustomLogger.getLogger(FacadeController.class);
 
     @Autowired
     private ObjectMapper objectMapper
@@ -78,7 +77,9 @@ public class FacadeController {
                 }
             }
             if (method != null) {
-                if(authentication){authentication.tokenToUser(packageName,interfaceName,methodName, params,header)}
+                if (authentication) {
+                    authentication.tokenToUser(packageName, interfaceName, methodName, params, header)
+                }
 
                 if (params != null && !"null".equals(params)) {
                     val = ReflectionUtils.invokeMethod(method, service, deserialize(params, method.getGenericParameterTypes()).toArray());
@@ -119,10 +120,22 @@ public class FacadeController {
         List methodParams = objectMapper.readValue(rawParams, List.class);
         List<Object> params = new ArrayList<>();
         for (int i = 0; i < methodParams.size(); i++) {
-            logger.debug("The param {}'s type name is {}", i, paramTypes[i].toString());
+//            logger.debug("The param {}'s type name is {}", i, paramTypes[i]?.toString());
+            logger.debug("The param's type name") {
+                [
+                        paramIndex   : i,
+                        paramTypeName: paramTypes[i]?.toString()
+                ]
+            };
             JavaType javaType = objectMapper.getTypeFactory().constructType(paramTypes[i]);
             params.add(objectMapper.convertValue(methodParams.get(i), javaType));
-            logger.debug("The converted param {}'s type name is {}", i, params.get(i).getClass().getName());
+            logger.debug("The converted param's type name") {
+                [
+                        convertedParamIndex   : i,
+                        convertedParamTypeName: params?.get(i)?.getClass()?.getName()
+                ]
+            };
+//            logger.debug("The converted param {}'s type name is {}", i, params?.get(i)?.getClass()?.getName());
         }
         return params;
     }
@@ -130,6 +143,9 @@ public class FacadeController {
     private ExceptionMessage formatException(Throwable throwable) {
         if (throwable == null) return null;
         ExceptionMessage exceptionMessage = new ExceptionMessage();
+        if (throwable instanceof AbstractBusinessException) {
+            exceptionMessage.setDatail(throwable?.datail)
+        }
         exceptionMessage.setName(throwable.getClass().getName());
         exceptionMessage.setMsg(throwable.getMessage());
         exceptionMessage.setCause(formatException(throwable.getCause()));
