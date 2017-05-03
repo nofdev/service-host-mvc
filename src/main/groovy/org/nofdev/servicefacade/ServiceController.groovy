@@ -1,6 +1,5 @@
 package org.nofdev.servicefacade
 
-import com.fasterxml.jackson.core.JsonProcessingException
 import com.fasterxml.jackson.databind.JavaType
 import com.fasterxml.jackson.databind.ObjectMapper
 import groovy.transform.CompileStatic
@@ -147,8 +146,10 @@ public class ServiceController {
         if (excepitonSettings.getIsTraceStack()) {
             logger.debug("The exception message will return trace info");
             try {
-                exceptionMessage.setStack(objectMapper.writeValueAsString(throwable.getStackTrace()));
-            } catch (JsonProcessingException e) {
+                StringWriter errors = new StringWriter();
+                throwable.printStackTrace(new PrintWriter(errors));
+                exceptionMessage.setStack(errors.toString());
+            } catch (Exception e) {
                 e.printStackTrace();
             }
         }

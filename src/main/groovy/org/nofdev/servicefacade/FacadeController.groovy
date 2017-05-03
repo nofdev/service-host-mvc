@@ -1,6 +1,5 @@
 package org.nofdev.servicefacade
 
-import com.fasterxml.jackson.core.JsonProcessingException
 import com.fasterxml.jackson.databind.JavaType
 import com.fasterxml.jackson.databind.ObjectMapper
 import groovy.transform.CompileStatic
@@ -17,7 +16,6 @@ import org.springframework.web.bind.annotation.*
 
 import java.lang.reflect.Method
 import java.lang.reflect.Type
-
 /**
  * Created by wangxuesong on 15/8/14.
  */
@@ -111,6 +109,8 @@ public class FacadeController {
                 httpHeaders.add(k, v?.toString())
             }
         }
+        httpHeaders.add("Access-Control-Allow-Origin", "*")
+        httpHeaders.add("Access-Control-Allow-Methods","GET,HEAD,PUT,POST,DELETE")
 
         def responseEntity = new ResponseEntity<HttpJsonResponse>(httpJsonResponse, httpHeaders, httpStatus)
         return responseEntity
@@ -152,8 +152,10 @@ public class FacadeController {
         if (exceptionSettings && exceptionSettings.getIsTraceStack()) {
             logger.debug("The exception message will return trace info");
             try {
-                exceptionMessage.setStack(objectMapper.writeValueAsString(throwable.getStackTrace()));
-            } catch (JsonProcessingException e) {
+                StringWriter errors = new StringWriter();
+                throwable.printStackTrace(new PrintWriter(errors));
+                exceptionMessage.setStack(errors.toString());
+            } catch (Exception e) {
                 e.printStackTrace();
             }
         }

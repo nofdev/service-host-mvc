@@ -9,7 +9,7 @@ import org.springframework.stereotype.Component;
 //@ConfigurationProperties(prefix = "org.nofdev.servicefacade.exception")
 public class ExceptionSettings {
 
-    private Boolean isTraceStack = false;
+    private Boolean isTraceStack = true;
 
     public Boolean getIsTraceStack() {
         return isTraceStack;

@@ -18,7 +18,6 @@ configurations.all {
     resolutionStrategy.cacheChangingModulesFor 0, 'seconds'
 }
 
-
 [compileJava, compileTestJava, compileGroovy, compileTestGroovy]*.options*.encoding = 'UTF-8'
 
 dependencies {

@@ -55,6 +55,8 @@ class ServiceContextAspect {
                 serviceContext.setCallId(callId)
             } else if (k.toLowerCase().startsWith(ServiceContext.PREFIX.toString().toLowerCase())) {
                 serviceContext.put(k, v)
+            } else if(k.toLowerCase()=='x-auth-token'){//TODO 增加可透传 header 设计
+                serviceContext.put(k, v)
             } else {
                 log.trace("没有以 Service-Context 打头的 log 不会被放入上下文对象") {
                     [
