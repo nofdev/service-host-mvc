@@ -7,6 +7,7 @@ import org.nofdev.logging.CustomLogger
 import org.springframework.aop.framework.AopProxyUtils
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.ApplicationContext
+import org.springframework.core.annotation.AnnotatedElementUtils
 import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
@@ -16,6 +17,7 @@ import org.springframework.web.bind.annotation.*
 
 import java.lang.reflect.Method
 import java.lang.reflect.Type
+
 /**
  * Created by wangxuesong on 15/8/14.
  */
@@ -61,8 +63,8 @@ public class FacadeController {
             Class<?> interfaceClazz = classLoader.loadClass(interfaceName);
             Object service = context.getBean(interfaceClazz);
             Class utltimate = AopProxyUtils.ultimateTargetClass(service)
-            logger.debug("To prevent exposing remote services, the service is ${service} and the service annotations are ${utltimate.annotations}")
-            if (!service || !utltimate.isAnnotationPresent(Service.class)) {
+            logger.debug("To prevent exposing proxied remote services, the service is ${service} and the service annotations are ${utltimate.annotations}")
+            if (!service || !AnnotatedElementUtils.hasAnnotation(utltimate.class, Service.class)) {
                 throw new ServiceNotFoundException();
             }
 
@@ -110,7 +112,7 @@ public class FacadeController {
             }
         }
         httpHeaders.add("Access-Control-Allow-Origin", "*")
-        httpHeaders.add("Access-Control-Allow-Methods","GET,HEAD,PUT,POST,DELETE")
+        httpHeaders.add("Access-Control-Allow-Methods", "GET,HEAD,PUT,POST,DELETE")
 
         def responseEntity = new ResponseEntity<HttpJsonResponse>(httpJsonResponse, httpHeaders, httpStatus)
         return responseEntity

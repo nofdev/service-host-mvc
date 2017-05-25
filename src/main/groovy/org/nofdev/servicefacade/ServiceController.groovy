@@ -7,6 +7,7 @@ import org.nofdev.logging.CustomLogger
 import org.springframework.aop.framework.AopProxyUtils
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.ApplicationContext
+import org.springframework.core.annotation.AnnotatedElementUtils
 import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
@@ -61,7 +62,7 @@ public class ServiceController {
             Object service = context.getBean(interfaceClazz);
             Class utltimate = AopProxyUtils.ultimateTargetClass(service)
             logger.debug("To prevent exposing remote services, the service is ${service} and the service annotations are ${utltimate.annotations}")
-            if (!service || !utltimate.isAnnotationPresent(Service.class)) {
+            if (!service || !AnnotatedElementUtils.hasAnnotation(utltimate.class, Service.class)) {
                 throw new ServiceNotFoundException();
             }
 
