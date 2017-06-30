@@ -17,7 +17,7 @@ import org.springframework.stereotype.Component
 @Aspect
 @Component
 @CompileStatic
-@Order(2)
+@Order(-80)
 class ServiceEntranceAspect {
     private static final CustomLogger log = CustomLogger.getLogger(ServiceEntranceAspect.class);
 
@@ -43,7 +43,6 @@ class ServiceEntranceAspect {
                     call    : "$args[0].$args[1].$args[2]"
             ]
         }
-//        log.info("JSON facade call: ${args[0]}.${args[1]}.${args[2]} execute took ${duration} ms")
         object
     }
 
@@ -60,7 +59,6 @@ class ServiceEntranceAspect {
                     headers: "${args[4]}"
             ]
         }
-//        log.info("JSON facade call: ${args[0]}.${args[1]}.${args[2]} request with params ${args[3]} and headers ${args[4]}");
     }
 
     @AfterReturning(pointcut="entrancePointcut()",returning = "result")
@@ -74,7 +72,6 @@ class ServiceEntranceAspect {
                     headers: result.getHeaders()
             ]
         }
-//        log.info("JSON facade call: ${args[0]}.${args[1]}.${args[2]} response with body ${objectMapper.writeValueAsString(result.getBody())} and headers ${result.getHeaders()}")
     }
 
 }

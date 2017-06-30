@@ -17,7 +17,7 @@ import org.springframework.stereotype.Component
 @Aspect
 @Component
 @CompileStatic
-@Order(1)
+@Order(-100)
 class ServiceContextAspect {
     private static final CustomLogger log = CustomLogger.getLogger(ServiceContextAspect.class);
 
@@ -29,33 +29,21 @@ class ServiceContextAspect {
 
     }
 
-    //TODO 设置 ServiceContext 貌似不应该被 AOP
     @Before("entrancePointcut()")
     void serviceContext(JoinPoint joinPoint) {
-        def serviceContext = extractServiceContent(joinPoint.args[4] as Map<String, String>)
-        def callId = serviceContext?.getCallId()
-        def thisId = UUID.randomUUID().toString()
-        if (callId) {
-            callId.parent = callId.id
-            callId.id = thisId
-        } else {
-            callId = new CallId(id: thisId, root: thisId)
-            serviceContext.setCallId(callId)
-        }
-
-//        MDC.put(ServiceContext.CALLID.toString(), objectMapper.writeValueAsString(callId))
-        ServiceContextHolder.setServiceContext(serviceContext)
+        extractServiceContent(joinPoint.args[4] as Map<String, String>)
+        ServiceContextHolder.serviceContext.generateCallId()
     }
 
-    private ServiceContext extractServiceContent(Map<String, String> header) {
-        def serviceContext = new ServiceContext()
+    private void extractServiceContent(Map<String, String> header) {
+        def serviceContext = ServiceContextHolder.serviceContext
         header.each { k, v ->
             if (k.toLowerCase() == ServiceContext.CALLID.toString().toLowerCase()) {
                 def callId = objectMapper.readValue(v, CallId.class)
                 serviceContext.setCallId(callId)
             } else if (k.toLowerCase().startsWith(ServiceContext.PREFIX.toString().toLowerCase())) {
                 serviceContext.put(k, v)
-            } else if(k.toLowerCase()=='x-auth-token'){//TODO 增加可透传 header 设计
+            } else if (k.toLowerCase() == 'x-auth-token') {//TODO 增加可透传 header 设计
                 serviceContext.put(k, v)
             } else {
                 log.trace("没有以 Service-Context 打头的 log 不会被放入上下文对象") {
@@ -66,6 +54,5 @@ class ServiceContextAspect {
                 }
             }
         }
-        serviceContext
     }
 }

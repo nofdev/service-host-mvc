@@ -44,55 +44,31 @@ public class ServiceController {
                                                  @PathVariable String methodName,
                                                  @RequestParam(value = "params", required = false) String params,
                                                  @RequestHeader(required = false) Map<String, String> header) {
-        def serviceContext = ServiceContextHolder.serviceContext
-
-        HttpJsonResponse<Object> httpJsonResponse = new HttpJsonResponse<>();
-        httpJsonResponse.setCallId(serviceContext?.getCallId()?.id);
-        httpJsonResponse.setVal(packageName);
         if (!interfaceName.endsWith("Service")) {
             interfaceName += "Service";
         }
-        interfaceName = packageName + '.' + interfaceName;
+        def serviceContext = ServiceContextHolder.serviceContext
+        HttpJsonResponse<Object> httpJsonResponse = new HttpJsonResponse<>();
+        httpJsonResponse.setCallId(serviceContext?.getCallId()?.id);
         Object val = null;
         ExceptionMessage exceptionMessage = null;
         HttpStatus httpStatus = HttpStatus.OK;
         try {
-            ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
-            Class<?> interfaceClazz = classLoader.loadClass(interfaceName);
-            Object service = context.getBean(interfaceClazz);
-            Class utltimate = AopProxyUtils.ultimateTargetClass(service)
-            logger.debug("To prevent exposing remote services, the service is ${service} and the service annotations are ${utltimate.annotations}")
-            if (!service || !AnnotatedElementUtils.hasAnnotation(utltimate.class, Service.class)) {
+            ServiceMethod serviceMethod = ServiceProviderAnnotationRegistrar.serviceMap.get("${packageName}.${interfaceName}#${methodName}".toString())
+            if (serviceMethod == null) {
                 throw new ServiceNotFoundException();
             }
-
-            Method[] methods = interfaceClazz.getMethods();
-            Method method = null;
-            for (Method m : methods) {
-                if (methodName.equals(m.getName())) {
-                    method = m;
-                    break;
-                }
+            Object[] args = new Object[0]
+            if (serviceMethod.interfaceMethod.getGenericParameterTypes() && params != null && "null" != params) {
+                args = deserialize(params, serviceMethod.interfaceMethod.getGenericParameterTypes())
             }
-
-            if (method != null) {
-                if(authentication){authentication.tokenToUser(packageName,interfaceName,methodName,params,header)}
-
-                if (params != null && !"null".equals(params)) {
-                    val = ReflectionUtils.invokeMethod(method, service, deserialize(params, method.getGenericParameterTypes()).toArray());
-                } else {
-                    val = ReflectionUtils.invokeMethod(method, service);
-                }
-            } else {
-                throw new ServiceNotFoundException();
-            }
+            authentication?.tokenToUser(packageName, "${packageName}.${interfaceName}", methodName, params, header)
+            val = ReflectionUtils.invokeMethod(serviceMethod.interfaceMethod, serviceMethod.targetObj, args)
         } catch (AbstractBusinessException e) {
             logger.info(e.getMessage(), e);
-//            httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
             exceptionMessage = formatException(e);
         } catch (Exception e) {
             logger.error(e.getMessage(), e);
-//            httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
             exceptionMessage = formatException(new UnhandledException(e));
         }
 
@@ -108,7 +84,6 @@ public class ServiceController {
                 httpHeaders.add(k, v?.toString())
             }
         }
-
         def responseEntity = new ResponseEntity<HttpJsonResponse>(httpJsonResponse, httpHeaders, httpStatus)
         return responseEntity
     }

@@ -20,6 +20,7 @@ import java.lang.reflect.Method
 import java.lang.reflect.Type
 import java.util.concurrent.CompletableFuture
 import java.util.stream.Collectors
+
 /**
  * Created by Liutengfei on 2016/7/19 0019.
  */
@@ -52,78 +53,43 @@ class BatchController {
 
         HttpJsonResponse<Object> httpJsonResponse = new HttpJsonResponse<>();
         httpJsonResponse.setCallId(serviceContext?.getCallId()?.id);
-        httpJsonResponse.setVal(packageName);
-        interfaceName = packageName + '.' + interfaceName;
         Object val = null;
         ExceptionMessage exceptionMessage = new ExceptionMessage();
         HttpStatus httpStatus = HttpStatus.OK;
         try {
-            ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
-            Class<?> interfaceClazz = classLoader.loadClass(interfaceName);
-            Object service = context.getBean(interfaceClazz);
-            Class utltimate = AopProxyUtils.ultimateTargetClass(service)
-            log.debug("To prevent exposing remote services, the service is ${service} and the service annotations are ${utltimate.annotations}")
-            if (!service || !AnnotatedElementUtils.hasAnnotation(utltimate.class, Service.class)) {
-                throw new BatchException();
+            ServiceMethod serviceMethod = ServiceProviderAnnotationRegistrar.serviceMap.get("${packageName}.${interfaceName}#${methodName}".toString())
+            if (serviceMethod == null) {
+                throw new ServiceNotFoundException();
             }
+            authentication?.tokenToUser(packageName, "${packageName}.${interfaceName}", methodName, params, header)
 
-            Method[] methods = interfaceClazz.getMethods();
-            Method method = null;
-            for (Method m : methods) {
-                if (methodName.equals(m.getName())) {
-                    method = m;
-                    break;
-                }
+            Map result = new LinkedHashMap()
+            List<CompletableFuture> futures = new ArrayList<>()
+            exceptionMessage.children = new HashMap<>()
+            for (int i = 0; i < params.length; i++) {
+                final int index = i;
+                final String paramStr = params[index]
+                final String key = String.valueOf(index)
+                CompletableFuture future = CompletableFuture.supplyAsync({
+                    Object obj = ReflectionUtils.invokeMethod(serviceMethod.interfaceMethod, serviceMethod.targetObj, deserialize(paramStr, serviceMethod.interfaceMethod.getGenericParameterTypes()).toArray())
+                    return result.put(key, obj)
+                }).exceptionally({ Throwable e ->
+                    log.info("", e);
+                    ExceptionMessage innerExceptionMessage = new ExceptionMessage()
+                    innerExceptionMessage = formatException(innerExceptionMessage, e)
+                    exceptionMessage.children.put(key, innerExceptionMessage)
+                    return null;
+                });
+                futures.add(future)
             }
-            if (method != null) {
-                if(authentication){authentication.tokenToUser(packageName,interfaceName,methodName, params,header)}
-
-                Map result = new LinkedHashMap()
-                List<CompletableFuture> futures = new ArrayList<>()
-                exceptionMessage.children = new HashMap<>()
-
-                if (params != null && params.length > 0) {
-                    for (int i = 0; i < params.length; i++) {
-                        final int index = i;
-                        final String paramStr = params[index]
-                        final String key = String.valueOf(index)
-
-                        CompletableFuture future = CompletableFuture.supplyAsync({
-                            Object obj = ReflectionUtils.invokeMethod(method, service, deserialize(paramStr, method.getGenericParameterTypes()).toArray())
-                            return result.put(key, obj)
-                        }).exceptionally({ Throwable e ->
-                            log.info("", e);
-                            ExceptionMessage innerExceptionMessage = new ExceptionMessage()
-                            innerExceptionMessage = formatException(innerExceptionMessage, e)
-                            exceptionMessage.children.put(key, innerExceptionMessage)
-                            return null;
-                        });
-                        futures.add(future)
-                    }
-
-                    CompletableFuture<Void> allDoneFuture = CompletableFuture.allOf(futures.toArray(new CompletableFuture[futures.size()]));
-                    CompletableFuture<List> listFuture = allDoneFuture
-                            .thenApply({ v -> futures.parallelStream().map({CompletableFuture f -> f.join() }).collect(Collectors.toList())
-                    })
-                    listFuture.get()
-                    val = result
-                } else {
-                    throw new BatchException();
-                }
-            } else {
-                throw new ServiceNotFoundException()
-            }
+            CompletableFuture allDoneFuture = CompletableFuture.allOf(futures.toArray(new CompletableFuture[futures.size()]))
+            allDoneFuture.get()
+            val = result
         } catch (AbstractBusinessException e) {
             log.info(e.getMessage(), e);
-//            httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
-            exceptionMessage = formatException(exceptionMessage, e);
-        } catch (BatchException e) {
-            log.info(e.getMessage(), e);
-//            httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
             exceptionMessage = formatException(exceptionMessage, e);
         } catch (Exception e) {
             log.error(e.getMessage(), e);
-//            httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
             exceptionMessage = formatException(exceptionMessage, new UnhandledException(e));
         }
 
@@ -169,7 +135,7 @@ class BatchController {
 
     private ExceptionMessage formatException(ExceptionMessage exceptionMessage, Throwable throwable) {
         if (throwable == null) return null;
-        if (throwable instanceof AbstractBusinessException){
+        if (throwable instanceof AbstractBusinessException) {
             exceptionMessage.setDatail(throwable?.datail)
         }
         exceptionMessage.setName(throwable.getClass().getName());
