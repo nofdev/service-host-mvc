@@ -23,40 +23,46 @@ public class ServiceProviderAnnotationRegistrar implements ApplicationListener<C
         map?.each { k, proxyTargetObj ->
             Class targetClazz = AopProxyUtils.ultimateTargetClass(proxyTargetObj)
             Service provider = targetClazz.getAnnotation(Service.class)
-            if (provider) {
+            Class<?>[] interfaces = targetClazz.getInterfaces()
+            if (provider && interfaces) {
 //                未来自定义注解的时候使用这一段
 //                Class serviceInterface = provider.serviceInterface()
 //                if (serviceInterface == Object.class || serviceInterface == null) {
 //                    serviceInterface = targetClazz.getInterfaces()[0]
 //                }
 
-                Class serviceInterface = targetClazz.getInterfaces()[0]
-                Method[] interfaceMethods = serviceInterface.getMethods();
-                interfaceMethods?.each { Method interfaceMethod ->
+                Class serviceInterface = interfaces[0]
+                String interfaceName = serviceInterface.getSimpleName()
+
+                if (interfaceName.endsWith("Facade") || interfaceName.endsWith("Service")) {
+
                     String interfacePackageName = serviceInterface.getPackage().name
-                    String interfaceName = serviceInterface.getSimpleName()
                     String interfacePath = serviceInterface.getTypeName()
-                    String interfaceMethodName = interfaceMethod.getName()
-                    String interfaceMethodPath = "${interfacePath}#${interfaceMethodName}"
-                    String interfaceType = interfaceName.endsWith("Facade") ? "Facade" : "Service"
 
-                    String interfaceSimpleName = interfaceName.substring(0, interfaceName.indexOf(interfaceType))
-                    String requestUrl = "/${interfaceType.toLowerCase()}/json/${interfacePackageName}/${interfaceSimpleName}/${interfaceMethodName}"
+                    Method[] interfaceMethods = serviceInterface.getMethods();
+                    interfaceMethods?.each { Method interfaceMethod ->
+                        String interfaceMethodName = interfaceMethod.getName()
+                        String interfaceMethodPath = "${interfacePath}#${interfaceMethodName}"
+                        String interfaceType = interfaceName.endsWith("Facade") ? "Facade" : "Service"
 
-                    serviceMap.put(interfaceMethodPath, new ServiceMethod(
-                            requestUrl: requestUrl,
-                            interfaceType: interfaceType,
-                            interfacePackageName: interfacePackageName,
-                            interfaceName: interfaceName,
-                            interfacePath: interfacePath,
-                            interfaceMethodName: interfaceMethodName,
-                            interfaceMethodPath: interfaceMethodPath,
-                            interfaceClass: serviceInterface,
-                            interfaceMethod: interfaceMethod,
-                            targetClass: targetClazz,
-                            targetObj: proxyTargetObj,
-                            targetMethod: targetClazz.getMethod(interfaceMethod.getName(), interfaceMethod.getParameterTypes())
-                    ))
+                        String interfaceSimpleName = interfaceName.substring(0, interfaceName.indexOf(interfaceType))
+                        String requestUrl = "/${interfaceType.toLowerCase()}/json/${interfacePackageName}/${interfaceSimpleName}/${interfaceMethodName}"
+
+                        serviceMap.put(interfaceMethodPath, new ServiceMethod(
+                                requestUrl: requestUrl,
+                                interfaceType: interfaceType,
+                                interfacePackageName: interfacePackageName,
+                                interfaceName: interfaceName,
+                                interfacePath: interfacePath,
+                                interfaceMethodName: interfaceMethodName,
+                                interfaceMethodPath: interfaceMethodPath,
+                                interfaceClass: serviceInterface,
+                                interfaceMethod: interfaceMethod,
+                                targetClass: targetClazz,
+                                targetObj: proxyTargetObj,
+                                targetMethod: targetClazz.getMethod(interfaceMethod.getName(), interfaceMethod.getParameterTypes())
+                        ))
+                    }
                 }
             }
         }
