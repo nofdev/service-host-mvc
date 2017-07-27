@@ -84,10 +84,6 @@ class BatchController {
         } catch (AbstractBusinessException e) {
             log.info(e.getMessage(), e)
             exceptionMessage = formatException(exceptionMessage, e)
-        } catch (UndeclaredThrowableException e) {
-            def inner = e.cause
-            log.error(inner.message, inner)
-            exceptionMessage = formatException(exceptionMessage, inner)
         } catch (Exception e) {
             log.error(e.getMessage(), e)
             exceptionMessage = formatException(exceptionMessage, new UnhandledException(e))

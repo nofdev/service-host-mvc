@@ -5,7 +5,10 @@ import org.hamcrest.core.StringContains
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.mockito.internal.matchers.And
+import org.mockito.internal.matchers.Not
 import org.mockito.internal.matchers.NotNull
+import org.mockito.internal.matchers.Or
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.MediaType
 import org.springframework.stereotype.Service
@@ -31,7 +34,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @Slf4j
 class FacadeControllerTest {
 
-    private MockMvc mockMvc;
+    private MockMvc mockMvc
 
     @Autowired
     private WebApplicationContext webApplicationContext
@@ -40,17 +43,17 @@ class FacadeControllerTest {
 
 
     @Before
-    public void setUp() {
+    void setUp() {
 //        mockMvc = MockMvcBuilders.standaloneSetup(facadeController).build()
         mockMvc = MockMvcBuilders.webAppContextSetup(webApplicationContext).build()
         APPLICATION_JSON_UTF8 = new MediaType(MediaType.APPLICATION_JSON.getType(),
                 MediaType.APPLICATION_JSON.getSubtype(),
                 Charset.forName("utf8")
-        );
+        )
     }
 
     @Test
-    public void testGet() {
+    void testGet() {
         mockMvc.perform(get("/facade/json/org.nofdev.servicefacade/Demo/method1"))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(APPLICATION_JSON_UTF8))
@@ -59,7 +62,7 @@ class FacadeControllerTest {
     }
 
     @Test
-    public void bugfixTestDeserialize() {
+    void bugfixTestDeserialize() {
         mockMvc.perform(get("/facade/json/org.nofdev.servicefacade/Demo/getAllAttendUsers?params=[{}]"))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(APPLICATION_JSON_UTF8))
@@ -68,12 +71,29 @@ class FacadeControllerTest {
     }
 
     @Test
-    public void bugfixTestDeserializeForNullParam() {
+    void bugfixTestDeserializeForNullParam() {
         mockMvc.perform(get("/facade/json/org.nofdev.servicefacade/Demo/getAllAttendUsers?params=[null]"))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(APPLICATION_JSON_UTF8))
                 .andExpect(header().string(ServiceContext.CALLID, NotNull.NOT_NULL))
                 .andExpect(content().string(StringContains.containsString("\"err\":null")))
+    }
+
+    @Test
+    void checkedExceptionWillUnwrapped() {
+        mockMvc.perform(get("/facade/json/org.nofdev.servicefacade/Demo/throwsCheckedException"))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(APPLICATION_JSON_UTF8))
+                .andExpect(header().string(ServiceContext.CALLID, NotNull.NOT_NULL))
+                .andExpect(content().string(
+                    new And([
+                            new Not(
+                                    StringContains.containsString("UndeclaredThrowableException")
+                            ),
+                            StringContains.containsString("IOException"),
+                            StringContains.containsString("throwsCheckedException"),
+                    ])
+                ))
     }
 }
 
@@ -82,27 +102,35 @@ class UserDTO implements Serializable {
     /**
      * 姓名
      */
-    String name;
+    String name
     /**
      * 年龄
      */
-    Integer age;
+    Integer age
     /**
      * 生日
      */
-    Date birthday;
+    Date birthday
 }
 
 interface DemoFacade {
-    String method1();
+    String method1()
 
-    void sayHello();
+    void sayHello()
 
-    List<UserDTO> getAllAttendUsers(UserDTO userDTO);
+    List<UserDTO> getAllAttendUsers(UserDTO userDTO)
+
+    void throwsCheckedException()
 }
 
 @Service
 class DemoFacadeService implements DemoFacade {
+
+    @Override
+    void throwsCheckedException() {
+        throw new IOException()
+    }
+
 
     @Override
     String method1() {
@@ -122,6 +150,6 @@ class DemoFacadeService implements DemoFacade {
 
 class TestException extends RuntimeException {
     TestException(String msg) {
-        super(msg);
+        super(msg)
     }
 }
