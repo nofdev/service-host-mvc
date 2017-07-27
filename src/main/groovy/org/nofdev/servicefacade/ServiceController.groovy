@@ -17,6 +17,8 @@ import org.springframework.web.bind.annotation.*
 
 import java.lang.reflect.Method
 import java.lang.reflect.Type
+import java.lang.reflect.UndeclaredThrowableException
+
 /**
  * Created by wangxuesong on 15/8/14.
  */
@@ -67,6 +69,10 @@ public class ServiceController {
         } catch (AbstractBusinessException e) {
             logger.info(e.getMessage(), e);
             exceptionMessage = formatException(e);
+        } catch (UndeclaredThrowableException e) {
+            def inner = e.cause
+            logger.error(inner.message, inner)
+            exceptionMessage = formatException(inner)
         } catch (Exception e) {
             logger.error(e.getMessage(), e);
             exceptionMessage = formatException(new UnhandledException(e));
