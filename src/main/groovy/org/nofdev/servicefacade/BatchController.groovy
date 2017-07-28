@@ -3,23 +3,18 @@ package org.nofdev.servicefacade
 import com.fasterxml.jackson.databind.JavaType
 import com.fasterxml.jackson.databind.ObjectMapper
 import groovy.transform.CompileStatic
-import org.nofdev.exception.BatchException
 import org.nofdev.logging.CustomLogger
-import org.springframework.aop.framework.AopProxyUtils
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.ApplicationContext
-import org.springframework.core.annotation.AnnotatedElementUtils
 import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
-import org.springframework.stereotype.Service
 import org.springframework.util.ReflectionUtils
 import org.springframework.web.bind.annotation.*
 
-import java.lang.reflect.Method
 import java.lang.reflect.Type
+import java.lang.reflect.UndeclaredThrowableException
 import java.util.concurrent.CompletableFuture
-import java.util.stream.Collectors
 
 /**
  * Created by Liutengfei on 2016/7/19 0019.
@@ -29,37 +24,37 @@ import java.util.stream.Collectors
 @CompileStatic
 class BatchController {
 
-    private static final CustomLogger log = CustomLogger.getLogger(BatchController.class);
+    private static final CustomLogger log = CustomLogger.getLogger(BatchController.class)
 
     @Autowired
     private ObjectMapper objectMapper
 
     @Autowired
-    private ExceptionSettings exceptionSettings;
+    private ExceptionSettings exceptionSettings
 
     @Autowired
-    private ApplicationContext context;
+    private ApplicationContext context
 
     @Autowired(required = false)
-    private Authentication authentication;
+    private Authentication authentication
 
     @RequestMapping("json/{packageName}/{interfaceName}/{methodName}")
-    public ResponseEntity<HttpJsonResponse> json(@PathVariable String packageName,
-                                                 @PathVariable String interfaceName,
-                                                 @PathVariable String methodName,
-                                                 @RequestParam(value = "params", required = false) String[] params,
-                                                 @RequestHeader(required = false) Map<String, String> header) {
+    ResponseEntity<HttpJsonResponse> json(@PathVariable String packageName,
+                                          @PathVariable String interfaceName,
+                                          @PathVariable String methodName,
+                                          @RequestParam(value = "params", required = false) String[] params,
+                                          @RequestHeader(required = false) Map<String, String> header) {
         def serviceContext = ServiceContextHolder.serviceContext
 
-        HttpJsonResponse<Object> httpJsonResponse = new HttpJsonResponse<>();
-        httpJsonResponse.setCallId(serviceContext?.getCallId()?.id);
-        Object val = null;
-        ExceptionMessage exceptionMessage = new ExceptionMessage();
-        HttpStatus httpStatus = HttpStatus.OK;
+        HttpJsonResponse<Object> httpJsonResponse = new HttpJsonResponse<>()
+        httpJsonResponse.setCallId(serviceContext?.getCallId()?.id)
+        Object val = null
+        ExceptionMessage exceptionMessage = new ExceptionMessage()
+        HttpStatus httpStatus = HttpStatus.OK
         try {
             ServiceMethod serviceMethod = ServiceProviderAnnotationRegistrar.serviceMap.get("${packageName}.${interfaceName}#${methodName}".toString())
             if (serviceMethod == null) {
-                throw new ServiceNotFoundException();
+                throw new ServiceNotFoundException()
             }
             authentication?.tokenToUser(packageName, "${packageName}.${interfaceName}", methodName, params, header)
 
@@ -67,34 +62,35 @@ class BatchController {
             List<CompletableFuture> futures = new ArrayList<>()
             exceptionMessage.children = new HashMap<>()
             for (int i = 0; i < params.length; i++) {
-                final int index = i;
+                final int index = i
                 final String paramStr = params[index]
                 final String key = String.valueOf(index)
                 CompletableFuture future = CompletableFuture.supplyAsync({
                     Object obj = ReflectionUtils.invokeMethod(serviceMethod.interfaceMethod, serviceMethod.targetObj, deserialize(paramStr, serviceMethod.interfaceMethod.getGenericParameterTypes()).toArray())
                     return result.put(key, obj)
                 }).exceptionally({ Throwable e ->
-                    log.info("", e);
+                    if (e instanceof UndeclaredThrowableException) e = e.cause
+                    log.info("", e)
                     ExceptionMessage innerExceptionMessage = new ExceptionMessage()
                     innerExceptionMessage = formatException(innerExceptionMessage, e)
                     exceptionMessage.children.put(key, innerExceptionMessage)
-                    return null;
-                });
+                    return null
+                })
                 futures.add(future)
             }
             CompletableFuture allDoneFuture = CompletableFuture.allOf(futures.toArray(new CompletableFuture[futures.size()]))
             allDoneFuture.get()
             val = result
         } catch (AbstractBusinessException e) {
-            log.info(e.getMessage(), e);
-            exceptionMessage = formatException(exceptionMessage, e);
+            log.info(e.getMessage(), e)
+            exceptionMessage = formatException(exceptionMessage, e)
         } catch (Exception e) {
-            log.error(e.getMessage(), e);
-            exceptionMessage = formatException(exceptionMessage, new UnhandledException(e));
+            log.error(e.getMessage(), e)
+            exceptionMessage = formatException(exceptionMessage, new UnhandledException(e))
         }
 
-        httpJsonResponse.setVal(val);
-        httpJsonResponse.setErr(exceptionMessage);
+        httpJsonResponse.setVal(val)
+        httpJsonResponse.setErr(exceptionMessage)
 
         def httpHeaders = new HttpHeaders()
 
@@ -112,45 +108,45 @@ class BatchController {
 
 
     private List deserialize(String rawParams, Type[] paramTypes) throws IOException {
-        List methodParams = objectMapper.readValue(URLDecoder.decode(rawParams, "UTF-8"), List.class);
-        List<Object> params = new ArrayList<>();
+        List methodParams = objectMapper.readValue(URLDecoder.decode(rawParams, "UTF-8"), List.class)
+        List<Object> params = new ArrayList<>()
         for (int i = 0; i < methodParams.size(); i++) {
             log.debug("The converted param's type name") {
                 [
                         convertedParamIndex   : i,
                         convertedParamTypeName: params?.get(i)?.getClass()?.getName()
                 ]
-            };
-            JavaType javaType = objectMapper.getTypeFactory().constructType(paramTypes[i]);
-            params.add(objectMapper.convertValue(methodParams.get(i), javaType));
+            }
+            JavaType javaType = objectMapper.getTypeFactory().constructType(paramTypes[i])
+            params.add(objectMapper.convertValue(methodParams.get(i), javaType))
             log.debug("The converted param's type name") {
                 [
                         convertedParamIndex   : i,
                         convertedParamTypeName: params?.get(i)?.getClass()?.getName()
                 ]
-            };
+            }
         }
-        return params;
+        return params
     }
 
     private ExceptionMessage formatException(ExceptionMessage exceptionMessage, Throwable throwable) {
-        if (throwable == null) return null;
+        if (throwable == null) return null
         if (throwable instanceof AbstractBusinessException) {
             exceptionMessage.setDatail(throwable?.datail)
         }
-        exceptionMessage.setName(throwable.getClass().getName());
-        exceptionMessage.setMsg(throwable.getMessage());
-        exceptionMessage.setCause(formatException(new ExceptionMessage(), throwable.getCause()));
+        exceptionMessage.setName(throwable.getClass().getName())
+        exceptionMessage.setMsg(throwable.getMessage())
+        exceptionMessage.setCause(formatException(new ExceptionMessage(), throwable.getCause()))
         if (exceptionSettings && exceptionSettings.getIsTraceStack()) {
-            log.debug("The exception message will return trace info");
+            log.debug("The exception message will return trace info")
             try {
-                StringWriter errors = new StringWriter();
-                throwable.printStackTrace(new PrintWriter(errors));
-                exceptionMessage.setStack(errors.toString());
+                StringWriter errors = new StringWriter()
+                throwable.printStackTrace(new PrintWriter(errors))
+                exceptionMessage.setStack(errors.toString())
             } catch (Exception e) {
-                e.printStackTrace();
+                e.printStackTrace()
             }
         }
-        return exceptionMessage;
+        return exceptionMessage
     }
 }
