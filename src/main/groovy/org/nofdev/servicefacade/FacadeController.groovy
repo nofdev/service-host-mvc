@@ -3,6 +3,7 @@ package org.nofdev.servicefacade
 import com.fasterxml.jackson.databind.JavaType
 import com.fasterxml.jackson.databind.ObjectMapper
 import groovy.transform.CompileStatic
+import org.nofdev.exception.ParamsException
 import org.nofdev.logging.CustomLogger
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.ApplicationContext
@@ -59,8 +60,12 @@ class FacadeController {
                 throw new ServiceNotFoundException()
             }
             Object[] args = new Object[0]
-            if (serviceMethod.interfaceMethod.getGenericParameterTypes() && params != null && "null" != params) {
-                args = deserialize(params, serviceMethod.interfaceMethod.getGenericParameterTypes())
+            Type[] types=serviceMethod.interfaceMethod.getGenericParameterTypes()
+            if (types && params != null && "null" != params) {
+                args = deserialize(params, types).toArray()
+            }
+            if(args.length!=(types?types.length:0)){
+                throw new ParamsException()
             }
             authentication?.tokenToUser(packageName, "${packageName}.${interfaceName}", methodName, params, header)
             val = ReflectionUtils.invokeMethod(serviceMethod.interfaceMethod, serviceMethod.targetObj, args)
@@ -100,7 +105,6 @@ class FacadeController {
         List methodParams = objectMapper.readValue(rawParams, List.class)
         List<Object> params = new ArrayList<>()
         for (int i = 0; i < methodParams.size(); i++) {
-//            logger.debug("The param {}'s type name is {}", i, paramTypes[i]?.toString());
             logger.debug("The param's type name") {
                 [
                         paramIndex   : i,
@@ -115,7 +119,6 @@ class FacadeController {
                         convertedParamTypeName: params?.get(i)?.getClass()?.getName()
                 ]
             }
-//            logger.debug("The converted param {}'s type name is {}", i, params?.get(i)?.getClass()?.getName());
         }
         return params
     }

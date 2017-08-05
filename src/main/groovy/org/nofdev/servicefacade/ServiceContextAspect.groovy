@@ -3,6 +3,8 @@ package org.nofdev.servicefacade
 import com.fasterxml.jackson.databind.ObjectMapper
 import groovy.transform.CompileStatic
 import org.aspectj.lang.JoinPoint
+import org.aspectj.lang.ProceedingJoinPoint
+import org.aspectj.lang.annotation.Around
 import org.aspectj.lang.annotation.Aspect
 import org.aspectj.lang.annotation.Before
 import org.aspectj.lang.annotation.Pointcut
@@ -29,10 +31,16 @@ class ServiceContextAspect {
 
     }
 
-    @Before("entrancePointcut()")
-    void serviceContext(JoinPoint joinPoint) {
-        extractServiceContent(joinPoint.args[4] as Map<String, String>)
-        ServiceContextHolder.serviceContext.generateCallId()
+    @Around("entrancePointcut()")
+    Object executionLogger(ProceedingJoinPoint joinPoint) {
+        try {
+            ServiceContextHolder.serviceContext.clear()
+            extractServiceContent(joinPoint.args[4] as Map<String, String>)
+            ServiceContextHolder.serviceContext.generateCallId()
+            return joinPoint.proceed()
+        } finally {
+            ServiceContextHolder.serviceContext.clear()
+        }
     }
 
     private void extractServiceContent(Map<String, String> header) {

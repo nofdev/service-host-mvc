@@ -3,6 +3,7 @@ package org.nofdev.servicefacade
 import com.fasterxml.jackson.databind.JavaType
 import com.fasterxml.jackson.databind.ObjectMapper
 import groovy.transform.CompileStatic
+import org.nofdev.exception.ParamsException
 import org.nofdev.logging.CustomLogger
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.ApplicationContext
@@ -57,8 +58,12 @@ class ServiceController {
                 throw new ServiceNotFoundException()
             }
             Object[] args = new Object[0]
-            if (serviceMethod.interfaceMethod.getGenericParameterTypes() && params != null && "null" != params) {
-                args = deserialize(params, serviceMethod.interfaceMethod.getGenericParameterTypes())
+            Type[] types=serviceMethod.interfaceMethod.getGenericParameterTypes()
+            if (types && params != null && "null" != params) {
+                args = deserialize(params, types).toArray()
+            }
+            if(args.length!=(types?types.length:0)){
+                throw new ParamsException()
             }
             authentication?.tokenToUser(packageName, "${packageName}.${interfaceName}", methodName, params, header)
             val = ReflectionUtils.invokeMethod(serviceMethod.interfaceMethod, serviceMethod.targetObj, args)
