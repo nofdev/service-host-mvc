@@ -6,6 +6,18 @@ It is a part of Nofdev RPC framework.
 
 It is a rpc server side util for java project based on spring mvc. 
 
+## Maven
+
+```
+稳定版
+<dependency>
+    <groupId>org.nofdev</groupId>
+    <artifactId>service-host-mvc</artifactId>
+    <version>1.4.7</version>
+</dependency>
+
+```
+
 ## Notice
 
 在 spring-boot-web 项目下测试通过
