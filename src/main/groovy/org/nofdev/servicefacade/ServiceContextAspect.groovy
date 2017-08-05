@@ -33,14 +33,16 @@ class ServiceContextAspect {
 
     @Around("entrancePointcut()")
     Object executionLogger(ProceedingJoinPoint joinPoint) {
+        def result = null
         try {
             ServiceContextHolder.serviceContext.clear()
             extractServiceContent(joinPoint.args[4] as Map<String, String>)
             ServiceContextHolder.serviceContext.generateCallId()
-            return joinPoint.proceed()
+            result=joinPoint.proceed()
         } finally {
             ServiceContextHolder.serviceContext.clear()
         }
+        result
     }
 
     private void extractServiceContent(Map<String, String> header) {
