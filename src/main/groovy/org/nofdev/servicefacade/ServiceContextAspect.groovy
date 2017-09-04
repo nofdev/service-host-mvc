@@ -21,6 +21,8 @@ import org.springframework.stereotype.Component
 @CompileStatic
 @Order(-100)
 class ServiceContextAspect {
+    public static final String TOKEN = "X-Auth-Token"
+
     private static final CustomLogger log = CustomLogger.getLogger(ServiceContextAspect.class);
 
     @Autowired
@@ -33,27 +35,30 @@ class ServiceContextAspect {
 
     @Around("entrancePointcut()")
     Object executionLogger(ProceedingJoinPoint joinPoint) {
-        def result = null
-        try {
-            ServiceContextHolder.serviceContext.clear()
-            extractServiceContent(joinPoint.args[4] as Map<String, String>)
-            ServiceContextHolder.serviceContext.generateCallId()
-            result=joinPoint.proceed()
-        } finally {
-            ServiceContextHolder.serviceContext.clear()
-        }
+        ServiceContextHolder.serviceContext.clear()
+        extractServiceContent(joinPoint.args[4] as Map<String, String>)
+        ServiceContextHolder.serviceContext.generateCallId()
+        def result = joinPoint.proceed()
         result
     }
 
     private void extractServiceContent(Map<String, String> header) {
         def serviceContext = ServiceContextHolder.serviceContext
+
+        String callIdToLowerCase = ServiceContext.CALLID.toString().toLowerCase()
+        String prefixToLowerCase = ServiceContext.PREFIX.toString().toLowerCase()
+        String tokenToLowerCase = TOKEN.toLowerCase()
+
         header.each { k, v ->
-            if (k.toLowerCase() == ServiceContext.CALLID.toString().toLowerCase()) {
+
+            String kToLowerCase = k.toLowerCase()
+
+            if (kToLowerCase == callIdToLowerCase) {
                 def callId = objectMapper.readValue(v, CallId.class)
                 serviceContext.setCallId(callId)
-            } else if (k.toLowerCase().startsWith(ServiceContext.PREFIX.toString().toLowerCase())) {
+            } else if (kToLowerCase.startsWith(prefixToLowerCase)) {
                 serviceContext.put(k, v)
-            } else if (k.toLowerCase() == 'x-auth-token') {//TODO 增加可透传 header 设计
+            } else if (kToLowerCase == tokenToLowerCase) {//TODO 增加可透传 header 设计
                 serviceContext.put(k, v)
             } else {
                 log.trace("没有以 Service-Context 打头的 log 不会被放入上下文对象") {
