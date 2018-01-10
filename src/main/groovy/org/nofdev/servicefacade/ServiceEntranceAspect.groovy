@@ -25,18 +25,18 @@ class ServiceEntranceAspect {
     private ObjectMapper objectMapper
 
     @Pointcut("execution(public * org.nofdev.servicefacade.*Controller.json(..))")
-    void entrancePointcut(){
+    void entrancePointcut() {
 
     }
 
     @Around("entrancePointcut()")
-    Object performance(ProceedingJoinPoint joinPoint){
+    Object performance(ProceedingJoinPoint joinPoint) {
         def args = joinPoint.args
         long startTime = System.currentTimeMillis()
         def object = joinPoint.proceed()
         long endTime = System.currentTimeMillis()
         def duration = endTime - startTime
-        log.info("监控服务执行时长") {
+        log.debug("监控服务执行时长") {
             [
                     type    : "QoS",
                     duration: duration,
@@ -47,11 +47,10 @@ class ServiceEntranceAspect {
     }
 
 
-
     @Before("entrancePointcut()")
-    void requestLog(JoinPoint joinPoint){
+    void requestLog(JoinPoint joinPoint) {
         def args = joinPoint.args
-        log.info("记录服务请求状态") {
+        log.debug("记录服务请求状态") {
             [
                     type   : "Request",
                     call   : "${args[0]}.${args[1]}.${args[2]}",
@@ -61,10 +60,10 @@ class ServiceEntranceAspect {
         }
     }
 
-    @AfterReturning(pointcut="entrancePointcut()",returning = "result")
-    void responseLog(JoinPoint joinPoint, ResponseEntity<HttpJsonResponse> result){
+    @AfterReturning(pointcut = "entrancePointcut()", returning = "result")
+    void responseLog(JoinPoint joinPoint, ResponseEntity<HttpJsonResponse> result) {
         def args = joinPoint.args
-        log.info("记录服务响应状态") {
+        log.debug("记录服务响应状态") {
             [
                     type   : "Response",
                     call   : "${args[0]}.${args[1]}.${args[2]}",
