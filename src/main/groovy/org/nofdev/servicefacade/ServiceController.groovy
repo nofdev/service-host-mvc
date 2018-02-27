@@ -122,7 +122,7 @@ class ServiceController {
         if (throwable == null) return null
         ExceptionMessage exceptionMessage = new ExceptionMessage()
         if (throwable instanceof AbstractBusinessException) {
-            exceptionMessage.setDatail(throwable?.datail)
+            exceptionMessage.setDetail(throwable?.datail)
         }
         exceptionMessage.setName(throwable.getClass().getName())
         exceptionMessage.setMsg(message ?: throwable.getMessage())

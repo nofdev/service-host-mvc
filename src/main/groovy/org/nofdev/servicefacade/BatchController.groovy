@@ -141,7 +141,7 @@ class BatchController {
     private ExceptionMessage formatException(ExceptionMessage exceptionMessage, Throwable throwable) {
         if (throwable == null) return null
         if (throwable instanceof AbstractBusinessException) {
-            exceptionMessage.setDatail(throwable?.datail)
+            exceptionMessage.setDetail(throwable?.detail)
         }
         exceptionMessage.setName(throwable.getClass().getName())
         exceptionMessage.setMsg(throwable.getMessage())
