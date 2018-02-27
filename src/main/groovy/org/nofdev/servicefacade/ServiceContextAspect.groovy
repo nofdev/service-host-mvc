@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import groovy.transform.CompileStatic
 import org.aspectj.lang.JoinPoint
 import org.aspectj.lang.ProceedingJoinPoint
+import org.aspectj.lang.annotation.After
 import org.aspectj.lang.annotation.Around
 import org.aspectj.lang.annotation.Aspect
 import org.aspectj.lang.annotation.Before
@@ -40,6 +41,12 @@ class ServiceContextAspect {
         ServiceContextHolder.serviceContext.generateCallId()
         def result = joinPoint.proceed()
         result
+    }
+
+    @After("entrancePointcut()")
+    void after(JoinPoint joinPoint){
+        //TODO 应该在调用结束后把上下文清掉, 以免污染新的请求
+        ServiceContextHolder.getServiceContext().clear()
     }
 
     private void extractServiceContent(Map<String, String> header) {
