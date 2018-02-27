@@ -7,7 +7,7 @@ repositories {
     mavenCentral()
     maven { url "http://repo.spring.io/snapshot" }
     maven { url "http://repo.spring.io/milestone" }
-    maven { url "http://10.32.11.210:8081/nexus/content/groups/public" }
+    maven { url "https://nexus.yintai.com/nexus/content/groups/public" }
 }
 
 group = 'org.nofdev'
