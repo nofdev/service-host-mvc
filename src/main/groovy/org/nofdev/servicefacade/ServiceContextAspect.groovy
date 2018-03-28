@@ -36,7 +36,7 @@ class ServiceContextAspect {
 
     @Around("entrancePointcut()")
     Object executionLogger(ProceedingJoinPoint joinPoint) {
-        ServiceContextHolder.serviceContext.clear()
+        ServiceContextHolder.clearContext()
         extractServiceContent(joinPoint.args[4] as Map<String, String>)
         ServiceContextHolder.serviceContext.generateCallId()
         def result = joinPoint.proceed()
@@ -46,7 +46,7 @@ class ServiceContextAspect {
     @After("entrancePointcut()")
     void after(JoinPoint joinPoint){
         //TODO 应该在调用结束后把上下文清掉, 以免污染新的请求
-        ServiceContextHolder.getServiceContext().clear()
+        ServiceContextHolder.clearContext()
     }
 
     private void extractServiceContent(Map<String, String> header) {
